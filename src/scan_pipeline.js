@@ -13,6 +13,24 @@ import { checkFocusDepth } from './rules/focuscycle.js';
 import { isHttpUrl, withinBytes } from './validator.js';
 
 const FREE_LIMIT = 3; // rendered scans per IP per day
+const MIN_BENCH_SITES = 10; // below this a percentile means nothing — hide it
+
+// Hosts excluded from the benchmark corpus: our own domains and fixtures
+// would skew the distribution (the stored report corpus is overwhelmingly
+// our own E2E scans), reserved TLDs never resolve publicly, and bare IPs
+// aren't comparable "sites" (almost always internal infra).
+const benchHost = (u) => {
+  let h;
+  try { h = new URL(u).hostname.toLowerCase(); } catch { return null; }
+  if (!h || h === 'localhost' || h.includes(':') ||
+      h === 'lazynext.com' || h.endsWith('.lazynext.com') ||
+      h === 'lazynext-platform.github.io' ||
+      h === 'example.com' || h.endsWith('.example.com') ||
+      h === 'example.org' || h === 'example.net' ||
+      /\.(test|invalid|local|internal|lan|example)$/.test(h) ||
+      /^\d+\.\d+\.\d+\.\d+$/.test(h)) return null;
+  return h;
+};
 
 // Append a throwaway query param so edge caches (cf-cache-status HIT serves
 // stale HTML for hours on cached sites) can't feed a scan yesterday's page —
@@ -110,13 +128,39 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
   issues = withRecommendations(issues);
   const result = { score: sitePages ? Math.round(sitePages.reduce((t, p) => t + p.score, 0) / sitePages.length) : score(issues), issues, rendered, plan: pro ? 'pro' : 'free', section508: section508Report(issues), ...(renderError ? { render_error: renderError } : {}), ...(sitePages ? { site: true, pages: sitePages.map(({ url, score: s, issues: i }) => ({ url, score: s, count: i.length })) } : {}) };
 
+  // Score benchmark — every real-site scan feeds a scan_stats row on the
+  // platform, and the result reports where this score lands against that
+  // corpus. The corpus is deliberately not seeded from stored reports
+  // (they are internal E2E scans of our own sites and would fabricate the
+  // distribution); it fills with real usage. Under MIN_BENCH_SITES there is
+  // nothing honest to claim, so the field stays absent. Queried before this
+  // scan's own row lands, so a scan never counts itself.
+  const statHost = isHttpUrl(url) ? benchHost(url) : null;
+  if (statHost) {
+    try {
+      const r = await kv.platform(env, '/query', { method: 'POST', body: JSON.stringify({ sql: 'SELECT COUNT(*) t, COALESCE(SUM(score < ?),0) below FROM scan_stats', params: [result.score] }) });
+      const d = r.ok ? await r.json() : null;
+      const t = d?.results?.[0]?.t ?? 0;
+      if (t >= MIN_BENCH_SITES) result.benchmark = { pct: Math.round((100 * (d.results[0].below ?? 0)) / t), sites: t };
+    } catch { /* stats unavailable — the scan itself is unaffected */ }
+  }
+
   // Persist a shareable report (30d) and optionally email it for Pro. If the
   // platform KV write fails, still return the scan — just without a report
-  // URL (a link that 404s is worse than no link).
+  // URL (a link that 404s is worse than no link). The scan_stats row lands
+  // in parallel — stats must never outrank or break the scan result.
   const id = crypto.randomUUID().slice(0, 12);
+  const statWrite = statHost
+    ? kv.platform(env, '/query', { method: 'POST', body: JSON.stringify({ sql: 'INSERT INTO scan_stats (score, pages, pro, host) VALUES (?,?,?,?)', params: [result.score, sitePages?.length ?? 1, pro ? 1 : 0, statHost] }) }).catch(() => {})
+    : Promise.resolve();
   try {
-    await kv.kvPut(env, `report:${id}`, JSON.stringify({ ...result, url: url ?? null, ts: Date.now() }), 2592000);
-    result.report = `${origin}/report/${id}`;
+    await Promise.all([
+      statWrite,
+      (async () => {
+        await kv.kvPut(env, `report:${id}`, JSON.stringify({ ...result, url: url ?? null, ts: Date.now() }), 2592000);
+        result.report = `${origin}/report/${id}`;
+      })(),
+    ]);
   } catch {
     result.report_error = 'report persistence unavailable';
   }

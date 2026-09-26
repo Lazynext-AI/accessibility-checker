@@ -107,7 +107,7 @@
                     return;
                 }
                 if (!r.ok) throw new Error(d.error || r.statusText);
-                statusEl.innerHTML = `Score: <span id="score">${d.score}</span>/100` + (d.site ? ` · ${d.pages.length} pages` : d.rendered ? " · rendered" : " · static") + (d.report ? ` · <a href="${d.report}" target="_blank">share report</a>` : "");
+                statusEl.innerHTML = `Score: <span id="score">${d.score}</span>/100` + (d.site ? ` · ${d.pages.length} pages` : d.rendered ? " · rendered" : " · static") + (d.benchmark ? ` · better than ${d.benchmark.pct}% of ${d.benchmark.sites} sites` : "") + (d.report ? ` · <a href="${d.report}" target="_blank">share report</a>` : "");
                 out.innerHTML = (d.site ? d.pages.map(p => `<div class="issue" style="border-left-color:#4f46e5"><div class="rule">${p.url}</div>score ${p.score}/100 · ${p.count} issue${p.count === 1 ? "" : "s"}</div>`).join("") : "")
                     + (d.issues.length
                         ? d.issues.map(i => `<div class="issue"><div class="rule">${i.rule ?? "issue"}${i.url ? " · " + i.url : ""}</div>${i.message}</div>`).join("")
