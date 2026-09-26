@@ -252,7 +252,7 @@ export const WIDGET_JS = `(() => {
       if (!r.ok) { out.innerHTML = '<div class="err">' + esc(d.error || 'scan failed') + (r.status === 402 ? ' <a href="' + base + '/checkout">Upgrade</a>' : '') + '</div>'; return; }
       const color = d.score >= 80 ? '#15803d' : d.score >= 50 ? '#b45309' : '#b91c1c';
       out.innerHTML = '<div class="score" style="color:' + color + '">' + d.score + '/100</div>' +
-        '<div>' + d.issues.length + ' issue' + (d.issues.length === 1 ? '' : 's') + ' found' + (d.report ? ' · <a href="' + esc(d.report) + '" target="_blank" rel="noopener">full report</a>' : '') + '</div>' +
+        '<div>' + d.issues.length + ' issue' + (d.issues.length === 1 ? '' : 's') + ' found' + (d.benchmark ? ' · better than ' + d.benchmark.pct + '% of ' + d.benchmark.sites + ' sites' : '') + (d.report ? ' · <a href="' + esc(d.report) + '" target="_blank" rel="noopener">full report</a>' : '') + '</div>' +
         '<ul>' + d.issues.slice(0, 8).map((i) => '<li><span class="rule">' + esc(i.rule) + '</span> ' + esc(i.message) + '</li>').join('') + '</ul>' +
         (d.issues.length > 8 ? '<div style="font-size:12px;color:#64748b">+ ' + (d.issues.length - 8) + ' more in the report</div>' : '');
     } catch (e) { out.innerHTML = '<div class="err">Scan failed: ' + esc(e.message || e) + '</div>'; }

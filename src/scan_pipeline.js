@@ -134,11 +134,13 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
   // (they are internal E2E scans of our own sites and would fabricate the
   // distribution); it fills with real usage. Under MIN_BENCH_SITES there is
   // nothing honest to claim, so the field stays absent. Queried before this
-  // scan's own row lands, so a scan never counts itself.
+  // scan's own row lands, so a scan never counts itself. The percentile is
+  // per distinct site: GROUP BY host + MAX(created_at) makes each host
+  // contribute only its latest score (rescans don't pad the corpus).
   const statHost = isHttpUrl(url) ? benchHost(url) : null;
   if (statHost) {
     try {
-      const r = await kv.platform(env, '/query', { method: 'POST', body: JSON.stringify({ sql: 'SELECT COUNT(*) t, COALESCE(SUM(score < ?),0) below FROM scan_stats', params: [result.score] }) });
+      const r = await kv.platform(env, '/query', { method: 'POST', body: JSON.stringify({ sql: 'SELECT COUNT(*) t, COALESCE(SUM(s < ?),0) below FROM (SELECT score AS s, MAX(created_at) FROM scan_stats WHERE host IS NOT NULL GROUP BY host)', params: [result.score] }) });
       const d = r.ok ? await r.json() : null;
       const t = d?.results?.[0]?.t ?? 0;
       if (t >= MIN_BENCH_SITES) result.benchmark = { pct: Math.round((100 * (d.results[0].below ?? 0)) / t), sites: t };

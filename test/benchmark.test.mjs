@@ -57,6 +57,10 @@ test('URL scan reports benchmark and records stats when corpus >= 10', async () 
   assert.ok(ins, 'expected a scan_stats insert');
   assert.equal(ins.params[3], 'acme-shop.com');
   assert.equal(ins.params[2], 1); // pro flag
+  // The percentile must count each site once — rescans pad scan_stats rows
+  // but not the corpus. The SELECT dedups to the latest score per host.
+  const sel = calls.find((c) => /FROM scan_stats/.test(c.sql));
+  assert.match(sel.sql, /GROUP BY host/i);
 });
 
 test('benchmark hidden while corpus is below MIN_BENCH_SITES; row still recorded', async () => {
