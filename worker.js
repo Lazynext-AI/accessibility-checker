@@ -4,6 +4,7 @@ import { isEmail, isHttpUrl, isToken } from './src/validator.js';
 import { PAGE_HTML } from './src/page.js';
 import { STATIC_FILES } from './src/static.js';
 import { runScan } from './src/scan_pipeline.js';
+import { reportView, filterIssues, reportCsv, reportHtml } from './src/report_views.js';
 import { AGENT_CARD, handleMcp, handleA2a, a2aTaskGet, WIDGET_JS } from './src/agent_surfaces.js';
 
 const CORS = {
@@ -245,32 +246,19 @@ export default {
       // name and conformance level — "wcag-1.3.1 · Info and Relationships (A)"
       // tells a customer what to prioritise; a bare rule id does not.
       const ruleInfo = Object.fromEntries(RULES.map((r) => [r.rule, r]));
+      // View customization (?level=, ?rule=, ?by=page) lives in report_views.js;
+      // all three formats honor it so an export matches the on-screen view.
+      const view = reportView(url.searchParams);
+      const issues = filterIssues(rep, ruleInfo, view);
       if (fmt === 'csv') {
-        const cell = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
-        const csv = ['rule,criterion,level,page,finding,fix', ...rep.issues.map((i) => [i.rule, ruleInfo[i.rule]?.name ?? '', ruleInfo[i.rule]?.level ?? '', i.url ?? '', i.message, i.fix ?? ''].map(cell).join(','))].join('\r\n');
-        return new Response(csv, { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="accessibility-report-${id}.csv"`, 'cache-control': 'public, max-age=3600' } });
+        return new Response(reportCsv(issues, ruleInfo), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="accessibility-report-${id}.csv"`, 'cache-control': 'public, max-age=3600' } });
       }
       if (fmt === 'pdf') {
-        const r = await platform(env, '/pdf', { method: 'POST', body: JSON.stringify({ url: `${url.origin}/report/${id}` }) });
+        const r = await platform(env, '/pdf', { method: 'POST', body: JSON.stringify({ url: `${url.origin}/report/${id}${url.search}` }) });
         if (!r.ok) return respond({ error: 'pdf export unavailable' }, 502);
         return new Response(r.body, { headers: { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="accessibility-report-${id}.pdf"`, 'cache-control': 'public, max-age=3600' } });
       }
-      const rows = rep.issues.map((i) => {
-        const meta = ruleInfo[i.rule];
-        const label = meta ? `<br><span style="color:#555;font-size:0.9em">${esc(meta.name)} · Level ${esc(meta.level)}</span>` : '';
-        return `<tr><td style="font-family:monospace">${esc(i.rule)}${label}</td><td>${esc(i.message)}${i.fix ? `<br><span style="color:#555;font-size:0.9em">Fix: ${esc(i.fix)}</span>` : ''}</td></tr>`;
-      }).join('');
-      return new Response(`<!doctype html><meta charset="utf-8"><title>Accessibility report — ${esc(rep.url ?? 'paste')}</title>
-<body style="font-family:system-ui;max-width:800px;margin:2rem auto;padding:0 1rem">
-<h1>Accessibility report</h1><p><b>${esc(rep.url ?? 'pasted HTML')}</b> · ${new Date(rep.ts).toUTCString()} · rendered: ${rep.rendered}</p>
-<p style="font-size:3rem;margin:0"><b>${rep.score}</b>/100${rep.site ? ' <span style="font-size:1rem;color:#555">site-wide (mean of ' + esc(String((rep.pages ?? []).length)) + ' pages)</span>' : ''}</p>
-${rep.benchmark ? `<p style="color:#555;font-size:0.9em">Better than ${esc(String(rep.benchmark.pct))}% of ${esc(String(rep.benchmark.sites))} sites scanned by this tool.</p>` : ''}
-${rep.section508 ? `<p style="color:#555">Section 508: ${rep.section508.conforms ? 'conforms' : `${rep.section508.criteria_failed.length} WCAG criteria failed — FPC ${esc(rep.section508.clauses_implicated.join(', '))}`}</p>` : ''}
-${Array.isArray(rep.pages) && rep.pages.length ? `<table style="width:100%;border-collapse:collapse;margin:0.5rem 0">${rep.pages.map((p) => `<tr><td style="font-family:monospace;font-size:0.85em">${esc(p.url)}</td><td style="text-align:right"><b>${p.score}</b>/100</td></tr>`).join('')}</table>` : ''}
-<p><a href="/report/${esc(id)}.csv">Download CSV</a> · <a href="/report/${esc(id)}.pdf">Download PDF</a> · <img src="/badge/${esc(id)}.svg" alt="accessibility score badge" style="vertical-align:middle"></p>
-<p style="font-size:0.85em;color:#555">Embed this badge: <code style="user-select:all">${esc(`<a href="${url.origin}/report/${id}"><img src="${url.origin}/badge/${id}.svg" alt="Accessibility score"></a>`)}</code></p>
-<table style="width:100%;border-collapse:collapse">${rows || '<tr><td>No issues found.</td></tr>'}</table>
-<p><a href="/">Run your own scan →</a></p>`,
+      return new Response(reportHtml(id, rep, issues, ruleInfo, view, url.origin),
         { headers: { 'content-type': 'text/html', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'", 'cache-control': 'public, max-age=3600' } });
     }
 

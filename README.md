@@ -23,7 +23,8 @@ scans also return `benchmark` — where the score ranks vs the corpus of sites
 scanned by this tool, shown once ≥10 sites are in),
 `GET /checkout` (trial → paid),
 `POST /cancel` (self-service cancellation by purchase email),
-`POST /lead` (email capture), `GET /report/:id` (shareable report),
+`POST /lead` (email capture), `GET /report/:id` (shareable report —
+`?level=A|AA|AAA`, `?rule=<id>`, `?by=page` views; CSV/PDF exports honor them),
 `GET /badge/:id.svg` (embeddable score badge for a report),
 `GET /rules` (the 74-rule coverage manifest — name, level, WCAG version,
 and detection path for every criterion the scanner emits),

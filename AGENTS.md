@@ -70,6 +70,9 @@ generated from the live manifest — regenerate, don't hand-edit.
 - `src/agent_surfaces.js` — MCP server, A2A `message/send`/`tasks/get`,
   agent card, `WIDGET_JS` (a **scan form**, not a chat — its `/scan` calls
   are already quota-gated)
+- `src/report_views.js` — report view customization (`?level=`, `?rule=`,
+  `?by=page`) + CSV/HTML rendering for `/report/:id` — **not** a protected
+  file, so report-surface changes belong here, not in `worker.js`
 - `src/rules/` — WCAG rule modules + `manifest.js` (the `/rules` source)
 - `scripts/deploy.mjs` — the only supported deploy path
 - `scripts/sync-page.mjs` — regenerates `index.html` + fixture serving list
