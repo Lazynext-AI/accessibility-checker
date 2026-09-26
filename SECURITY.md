@@ -10,7 +10,7 @@ Please do not open public issues for vulnerabilities.
 ## Scope
 
 - `accessibility-checker*.workers.dev` — the scan/report/monitor/checkout API
-- `lazynext-platform.github.io/accessibility-checker` — the public UI
+- `lazynext-ai.github.io/accessibility-checker` — the public UI
 - The platform endpoints it calls (`ai-company-os.dry-hall-6a50.workers.dev`)
 
 ## Security posture
