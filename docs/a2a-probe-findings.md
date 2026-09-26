@@ -25,3 +25,9 @@ To improve the documentation and usability of the Accessibility Checker, the fol
 
 ## Conclusion
 The Accessibility Checker repository demonstrates a strong commitment to documentation and user guidance. However, the lack of explicit documentation for the GET /rules endpoint in the README file presents an opportunity for improvement. By addressing this gap, the Accessibility Checker can further enhance its usability and accessibility, aligning with its core mission of promoting web accessibility for small businesses and solo entrepreneurs.
+
+## Resolution — fixed
+`README.md` now documents `GET /rules` explicitly (purpose, response shape —
+the 74-rule manifest with name/level/WCAG-version/detection-path fields),
+plus SDK access (`a11y.rules()` / `c.Rules()`) and the MCP `list_rules` tool.
+This finding is closed.

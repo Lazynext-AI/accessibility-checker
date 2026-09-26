@@ -54,16 +54,21 @@ link can trip it. Trade-off is intentional (warn over miss) and documented,
 but interactive Browser Rendering verification would sharpen it. Not
 actionable without a bounded-interaction harness.
 
-**P4 — Report KV TTL.** `report:*` keys carry a 30d TTL for funnel
-aggregation. Long-running monitor customers who scan daily accumulate
-references — fine at current volume, but a retro-prune sweep (`report:*`
-older than 30d on the daily cron) prevents silent growth at scale.
+**P4 — Report KV TTL — resolved.** `report:*` writes pass `ttl: 2592000`
+(30d) in `scan_pipeline.js`, so every key auto-expires — a daily-scanning
+monitor caps at ~30 live report keys. Growth is TTL-bounded by construction;
+a retro-prune sweep would only delete keys already queued for expiry. No
+code needed.
 
-**P5 — Mirror-drift guard.** The dual-script deploy (`accessibility-checker`
-+ `accessibility-checker-api`) is enforced by convention via
-`scripts/deploy.mjs`, but nothing detects a manual single-script deploy.
-Recommendation: a weekly drift-check comparing `Last-Modified`/etag headers
-on both script versions, alerting if they diverge.
+**P5 — Mirror-drift guard — resolved.** The dual-script deploy
+(`accessibility-checker` + `accessibility-checker-api`) is enforced by
+convention via `scripts/deploy.mjs`, but nothing detected a manual
+single-script deploy. `scripts/health_check.py` (launchd, every 15 min) now
+fetches `/rules` — the deterministic 74-rule manifest — from both
+workers.dev origins and fails the `a11y-mirror` check on any byte
+difference or fetch failure, alerting on state transitions like the other
+checks. The same run also covers `checker.lazynext.com`/`api.lazynext.com`
+health (the workers-domain 522 trap).
 
 ## Deferred (blocked on owner action)
 
