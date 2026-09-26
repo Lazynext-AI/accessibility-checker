@@ -13,11 +13,14 @@ curl -X POST https://accessibility-checker.dry-hall-6a50.workers.dev/scan \
   -H 'content-type: application/json' \
   -d '{"url": "https://yoursite.com", "license": "you@example.com", "email_report": true}'
 # → {"score": 70, "issues": [{"rule": "wcag-1.3.1", ...}], "rendered": true,
+#    "benchmark": {"pct": 61, "sites": 128},
 #    "report": ".../report/<id>"}
 ```
 
 Endpoints: `POST /scan` (html or url; `{"url": ..., "site": true}` crawls
-same-origin pages — 3 free / 10 Pro — and returns per-page scores),
+same-origin pages — 3 free / 10 Pro — and returns per-page scores; real-site
+scans also return `benchmark` — where the score ranks vs the corpus of sites
+scanned by this tool, shown once ≥10 sites are in),
 `GET /checkout` (trial → paid),
 `POST /cancel` (self-service cancellation by purchase email),
 `POST /lead` (email capture), `GET /report/:id` (shareable report),
