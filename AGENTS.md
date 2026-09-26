@@ -1,6 +1,6 @@
 # Accessibility Checker — Agent Operating Notes
 
-Standalone repo: `github.com/Lazynext-Platform/accessibility-checker`.
+Standalone repo: `github.com/Lazynext-AI/accessibility-checker`.
 Mirrored inside the platform monorepo at `products/accessibility-checker` —
 keep the two trees synchronized; a fix that lands in only one silently
 diverges the next deploy.

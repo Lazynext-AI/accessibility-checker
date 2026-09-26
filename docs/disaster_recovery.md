@@ -18,7 +18,7 @@ call to `ai-company-os` (`worker.js` lines 37–55). Therefore:
 | `rl:*` rate-limit counters (25h TTL) | Platform KV `EPHEMERAL` | Disposable by design |
 | `pending:*` confirm tokens (15m TTL) | Platform KV `EPHEMERAL` | Disposable — users re-request |
 | `lead:*` + CRM/waitlist/email_contacts rows | D1 `ai-company-db` via platform routes | **Platform weekly backup** (see below) |
-| Worker code | Git (`Lazynext-Platform/accessibility-checker` + monorepo mirror) | Continuous |
+| Worker code | Git (`Lazynext-AI/accessibility-checker` + monorepo mirror) | Continuous |
 | `PLATFORM_TOKEN`, `DODO_API_*`, `SERPER_API_KEY` secrets | Cloudflare worker secrets | Not backed up — re-set via `wrangler secret put` |
 
 The platform's own backup job is `.github/workflows/backup.yml` in the

@@ -1,3 +1,3 @@
-module github.com/Lazynext-Platform/accessibility-checker/sdk/go
+module github.com/Lazynext-AI/accessibility-checker/sdk/go
 
 go 1.21

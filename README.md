@@ -146,7 +146,7 @@ rules, _ := c.Rules()
 Gate a deploy on accessibility score:
 
 ```yaml
-- uses: Lazynext-Platform/accessibility-checker@main
+- uses: Lazynext-AI/accessibility-checker@main
   with:
     url: https://staging.example.com
     fail-under: 80            # fail the build below this score
