@@ -13,7 +13,7 @@ export const RULES = [
   { rule: "wcag-1.2.5",  name: "Audio Description (Prerecorded)", level: "AA", wcag: "2.0", how: "static",   detects: "<video> without <track kind=descriptions> and not muted (warn-class — burned-in description satisfies it)" },
   { rule: "wcag-1.3.1",  name: "Info and Relationships",    level: "A",   wcag: "2.0", how: "static",    detects: "heading skips/no <h1>/no headings, missing <main> landmark, stray <li>/<dt>/<dd>, <fieldset> w/o <legend>, <optgroup> w/o label, tables w/o <th>, duplicate landmarks" },
   { rule: "wcag-1.3.2",  name: "Meaningful Sequence",       level: "A",   wcag: "2.0", how: "static",    detects: "order-breaking CSS (flex/grid `order`, reversed flex-direction, bidi-override) and aria-flowto overrides — warn-class" },
-  { rule: "wcag-1.3.3",  name: "Sensory Characteristics",   level: "A",   wcag: "2.0", how: "static",    detects: "instructions relying on position/shape/sound alone (e.g. 'the menu on the left')" },
+  { rule: "wcag-1.3.3",  name: "Sensory Characteristics",   level: "A",   wcag: "2.0", how: "static",    detects: "instructions relying on position/shape/sound alone (e.g. 'menu at left', 'the green button')" },
   { rule: "wcag-1.3.4",  name: "Orientation",               level: "AA",  wcag: "2.1", how: "static",    detects: "CSS locking orientation (orientation: media query w/o fallback)" },
   { rule: "wcag-1.3.5",  name: "Identify Input Purpose",    level: "AA",  wcag: "2.1", how: "static",    detects: "personal-data fields (email/name/tel/etc.) missing autocomplete" },
   { rule: "wcag-1.4.1",  name: "Use of Color",              level: "A",   wcag: "2.0", how: "rendered",  detects: "links inside prose distinguished by color alone (<3:1 vs body text, no underline)" },

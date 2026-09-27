@@ -768,8 +768,10 @@ export function scanAdditionalHtml(html) {
 
   // WCAG 3.2.1 — autofocus moves focus on load without a user request,
   // disorienting screen-reader and keyboard users (same criterion as the
-  // rendered-facts check; this covers static scans).
-  if (/\bautofocus\b/i.test(src)) {
+  // rendered-facts check; this covers static scans). The \s anchor requires
+  // attribute position inside a tag — prose mentions ("the autofocus
+  // attribute"), data-autofocus, and class="autofocus" don't count.
+  if (/<[a-zA-Z][^>]*\sautofocus\b/i.test(src)) {
     issues.push({ rule: "wcag-3.2.1", message: "autofocus moves focus without user request — let users choose where to start" });
   }
 
@@ -1054,7 +1056,12 @@ export function scanAdditionalHtml(html) {
   // (AA) tolerates object-recognition and personal-content tests, AAA allows
   // no cognitive function test at all — only non-cognitive paths (passkey,
   // OAuth, magic link, copy-paste). CAPTCHA/challenge markup is the signal.
-  if (/g-recaptcha|h-captcha|cf-turnstile|turnstile|hcaptcha|arkose|funcaptcha|geetest|\bcaptcha\b/i.test(srcRaw)) {
+  // Vendor tokens are distinctive enough to match anywhere (incl. script
+  // bodies — JS-injected widgets count). The generic words "captcha" and
+  // "turnstile" appear in ordinary prose and hrefs, so they need attribute
+  // context: class/id/src/action values or data-* names.
+  if (/g-recaptcha|h-captcha|hcaptcha|grecaptcha|cf-turnstile|arkose|funcaptcha|geetest|challenges\.cloudflare\.com|turnstile\.render/i.test(srcRaw) ||
+      /<[a-zA-Z][^>]*\b(?:class|id|src|action|data-[a-z-]+)\s*=\s*["'][^"']*\b(?:captcha|turnstile)\b|<[a-zA-Z][^>]*\bdata-[a-z-]*(?:captcha|turnstile)\b/i.test(srcRaw)) {
     issues.push({
       rule: "wcag-3.3.9",
       message: "CAPTCHA/cognitive-challenge markup found — at Level AAA authentication needs a fully non-cognitive path (passkey, magic link, OAuth)",

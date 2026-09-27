@@ -19,7 +19,7 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-1.2.5 — Audio Description (Prerecorded) | AA | 2.0 | <video> without <track kind=descriptions> and not muted (warn-class — burned-in description satisfies it) |
 | wcag-1.3.1 — Info and Relationships | A | 2.0 | heading skips/no <h1>/no headings, missing <main> landmark, stray <li>/<dt>/<dd>, <fieldset> w/o <legend>, <optgroup> w/o label, tables w/o <th>, duplicate landmarks |
 | wcag-1.3.2 — Meaningful Sequence | A | 2.0 | order-breaking CSS (flex/grid `order`, reversed flex-direction, bidi-override) and aria-flowto overrides — warn-class |
-| wcag-1.3.3 — Sensory Characteristics | A | 2.0 | instructions relying on position/shape/sound alone (e.g. 'the menu on the left') |
+| wcag-1.3.3 — Sensory Characteristics | A | 2.0 | instructions relying on position/shape/sound alone (e.g. 'menu at left', 'the green button') |
 | wcag-1.3.4 — Orientation | AA | 2.1 | CSS locking orientation (orientation: media query w/o fallback) |
 | wcag-1.3.5 — Identify Input Purpose | AA | 2.1 | personal-data fields (email/name/tel/etc.) missing autocomplete |
 | wcag-1.4.2 — Audio Control | A | 2.0 | autoplaying <audio>/<video> (unmuted) without pause/stop controls |

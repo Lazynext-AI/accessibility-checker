@@ -353,7 +353,12 @@ test("media without captions flags correct criterion; captioned passes", () => {
 
 test("autofocus flags wcag-3.2.1", () => {
   assert.ok(rules(scanAdditionalHtml('<input autofocus>')).includes("wcag-3.2.1"));
+  assert.ok(rules(scanAdditionalHtml('<input autofocus="">')).includes("wcag-3.2.1"));
   assert.ok(!rules(scanAdditionalHtml('<input>')).includes("wcag-3.2.1"));
+  // The word in prose/data-*/class values is not the attribute.
+  assert.ok(!rules(scanAdditionalHtml('<p>the autofocus attribute moves focus</p>')).includes("wcag-3.2.1"));
+  assert.ok(!rules(scanAdditionalHtml('<td>autofocus and onfocus handlers</td>')).includes("wcag-3.2.1"));
+  assert.ok(!rules(scanAdditionalHtml('<input data-autofocus="1" class="autofocus-demo">')).includes("wcag-3.2.1"));
 });
 
 test("keyboard-access gaps flag wcag-2.1.1", () => {
@@ -594,6 +599,16 @@ test("captcha markup flagged (3.3.9)", () => {
 });
 test("no captcha markup not flagged (3.3.9)", () => {
   assert.ok(!rules(scanAdditionalHtml('<form><input type="email" autocomplete="email"><button>Sign in</button></form>')).includes("wcag-3.3.9"));
+});
+test("captcha prose mentions don't flag (3.3.9)", () => {
+  // The word "captcha"/"turnstile" in prose, links, or titles isn't widget markup.
+  assert.ok(!rules(scanAdditionalHtml('<p>CAPTCHA/cognitive-challenge markup found</p>')).includes("wcag-3.3.9"));
+  assert.ok(!rules(scanAdditionalHtml('<a href="/blog/what-is-a-captcha">guide</a>')).includes("wcag-3.3.9"));
+  assert.ok(!rules(scanAdditionalHtml('<p>the station turnstile was jammed</p>')).includes("wcag-3.3.9"));
+  // Attribute-context mentions still count — homemade widgets use class/id/src/data-*.
+  assert.ok(rules(scanAdditionalHtml('<div class="captcha"></div>')).includes("wcag-3.3.9"));
+  assert.ok(rules(scanAdditionalHtml('<img src="captcha.php">')).includes("wcag-3.3.9"));
+  assert.ok(rules(scanAdditionalHtml('<div data-captcha="1"></div>')).includes("wcag-3.3.9"));
 });
 
 // WCAG 1.4.7 — unmuted audio gets the background-audio advisory
