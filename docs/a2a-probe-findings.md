@@ -28,6 +28,6 @@ The Accessibility Checker repository demonstrates a strong commitment to documen
 
 ## Resolution — fixed
 `README.md` now documents `GET /rules` explicitly (purpose, response shape —
-the 74-rule manifest with name/level/WCAG-version/detection-path fields),
+the 75-rule manifest with name/level/WCAG-version/detection-path fields),
 plus SDK access (`a11y.rules()` / `c.Rules()`) and the MCP `list_rules` tool.
 This finding is closed.
