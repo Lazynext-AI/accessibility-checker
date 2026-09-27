@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow DOM fixture</title>
+</head>
+<body>
+<h1>Shadow DOM fixture</h1>
+<main>
+<shadow-card></shadow-card>
+</main>
+<script>
+    // Imperative open shadow roots — the scanner's rendered path must serialize
+    // them into <template shadowrootmode> markers or markup rules stay blind.
+    // Nested host exercises post-order expansion; the shadow button is the
+    // page's only focusable, so the census must pierce roots to count it.
+    class ShadowInner extends HTMLElement {
+        connectedCallback() {
+            this.attachShadow({ mode: "open" }).innerHTML =
+                '<img src="icon-192.png" width="48" height="48">';
+        }
+    }
+    class ShadowCard extends HTMLElement {
+        connectedCallback() {
+            this.attachShadow({ mode: "open" }).innerHTML =
+                '<img src="icon-192.png" width="48" height="48">' +
+                "<shadow-inner></shadow-inner>" +
+                '<button id="innerBtn" style="padding:14px 22px;font-size:1rem">Shadow button</button>';
+        }
+    }
+    customElements.define("shadow-inner", ShadowInner);
+    customElements.define("shadow-card", ShadowCard);
+</script>
+</body>
+</html>

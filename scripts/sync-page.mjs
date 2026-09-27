@@ -24,6 +24,7 @@ const files = {
   '/partial-obscured.html': 'text/html; charset=utf-8',
   '/nav-a.html': 'text/html; charset=utf-8',
   '/nav-b.html': 'text/html; charset=utf-8',
+  '/shadow.html': 'text/html; charset=utf-8',
 };
 const binaryFiles = {
   '/og.png': 'image/png',
