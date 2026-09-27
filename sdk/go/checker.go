@@ -47,21 +47,41 @@ type Issue struct {
 	URL     string `json:"url,omitempty"`
 }
 
+// Section508Report is the 36 CFR 1194 clause mapping derived from the WCAG
+// findings — 508 defines no web rules of its own; E205.4 incorporates
+// WCAG 2.0 AA by reference.
+type Section508Report struct {
+	Basis             string   `json:"basis"`
+	Conforms          bool     `json:"conforms"`
+	CriteriaFailed    []string `json:"criteria_failed"`
+	ClausesImplicated []string `json:"clauses_implicated"`
+	ClauseCount       int      `json:"clause_count"`
+}
+
+// Benchmark positions a score against the public scan corpus — present once
+// ≥10 distinct sites are on record.
+type Benchmark struct {
+	Pct   int `json:"pct"`
+	Sites int `json:"sites"`
+}
+
 // ScanResult is the /scan response.
 type ScanResult struct {
-	Score       int            `json:"score"`
-	Issues      []Issue        `json:"issues"`
-	Rendered    bool           `json:"rendered"`
-	Plan        string         `json:"plan"`
-	Section508  map[string]any `json:"section508"`
-	Report      string         `json:"report,omitempty"`
-	RenderError string         `json:"render_error,omitempty"`
-	Site        bool           `json:"site,omitempty"`
+	Score       int              `json:"score"`
+	ScoreModel  string           `json:"score_model"`
+	Issues      []Issue          `json:"issues"`
+	Rendered    bool             `json:"rendered"`
+	Plan        string           `json:"plan"`
+	Section508  Section508Report `json:"section508"`
+	Report      string           `json:"report,omitempty"`
+	RenderError string           `json:"render_error,omitempty"`
+	Site        bool             `json:"site,omitempty"`
 	Pages       []struct {
 		URL   string `json:"url"`
 		Score int    `json:"score"`
 		Count int    `json:"count"`
 	} `json:"pages,omitempty"`
+	Benchmark *Benchmark `json:"benchmark,omitempty"`
 }
 
 // Rule describes one check the scanner can emit.
@@ -155,21 +175,25 @@ func (c *Client) ReportURL(id string) string { return c.BaseURL + "/report/" + i
 func (c *Client) BadgeURL(id string) string  { return c.BaseURL + "/badge/" + id + ".svg" }
 
 // StoredReport is the persisted scan report served at /report/{id}.json
-// (30-day TTL) — the raw findings export.
+// (30-day TTL) — the raw findings export. URL is empty for pasted-HTML scans
+// (the stored field is null there).
 type StoredReport struct {
-	URL      string  `json:"url"`
-	Ts       int64   `json:"ts"`
-	Score    int     `json:"score"`
-	Rendered bool    `json:"rendered"`
-	Site     bool    `json:"site,omitempty"`
-	Issues   []Issue `json:"issues"`
-	Pages    []struct {
+	URL         string  `json:"url"`
+	Ts          int64   `json:"ts"`
+	Score       int     `json:"score"`
+	ScoreModel  string  `json:"score_model"`
+	Rendered    bool    `json:"rendered"`
+	Plan        string  `json:"plan"`
+	RenderError string  `json:"render_error,omitempty"`
+	Site        bool    `json:"site,omitempty"`
+	Issues      []Issue `json:"issues"`
+	Pages       []struct {
 		URL   string `json:"url"`
 		Score int    `json:"score"`
 		Count int    `json:"count"`
 	} `json:"pages,omitempty"`
-	Section508 map[string]any `json:"section508,omitempty"`
-	Benchmark  map[string]any `json:"benchmark,omitempty"`
+	Section508 Section508Report `json:"section508"`
+	Benchmark  *Benchmark       `json:"benchmark,omitempty"`
 }
 
 // Report fetches a stored report's raw findings via the .json export.

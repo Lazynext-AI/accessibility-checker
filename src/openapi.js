@@ -99,7 +99,7 @@ export const OPENAPI = {
     '/report/{id}': {
       get: {
         summary: 'Shareable report (HTML)',
-        description: 'Reports persist for 30 days. Append `.csv`, `.json`, or `.pdf` to the id for export formats (`.json` returns the stored report object with the filtered `issues` list — the machine-readable export for SDK/CI consumers). Query params filter the view identically across formats: `level` (A|AA|AAA|BP), `rule` (e.g. `wcag-1.4.3`), `by=page` (group site-scan findings by page).',
+        description: 'Reports persist for 30 days. Append `.csv`, `.json`, or `.pdf` to the id for export formats (`.json` returns the stored report object with the filtered `issues` list — the machine-readable export for SDK/CI consumers). `level` (A|AA|AAA|BP) and `rule` (e.g. `wcag-1.4.3`) filter findings identically across formats; `by=page` groups findings under their page in the HTML and PDF views (CSV/JSON stay flat).',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           { name: 'level', in: 'query', schema: { type: 'string', enum: ['A', 'AA', 'AAA', 'BP'] } },
@@ -112,7 +112,7 @@ export const OPENAPI = {
             content: {
               'text/html': { schema: { type: 'string' } },
               'text/csv': { schema: { type: 'string' } },
-              'application/json': { schema: { type: 'object' } },
+              'application/json': { schema: { $ref: '#/components/schemas/StoredReport' } },
               'application/pdf': { schema: { type: 'string', format: 'binary' } },
             },
           },
@@ -369,11 +369,33 @@ export const OPENAPI = {
       Section508: {
         type: 'object',
         properties: {
-          provisions: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, issues: { type: 'number' } } } },
-          covered: { type: 'number' },
-          total: { type: 'number' },
+          basis: { type: 'string', description: 'Incorporation basis — 508 defines no web test rules of its own; E205.4 incorporates WCAG 2.0 AA by reference' },
+          conforms: { type: 'boolean', description: 'true when no WCAG criterion fired' },
+          criteria_failed: { type: 'array', items: { type: 'string' }, description: 'Sorted `wcag-*` rule ids that fired' },
+          clauses_implicated: { type: 'array', items: { type: 'string' }, description: 'Chapter 3 Functional Performance Criteria (302.x) the failures map onto — the language a VPAT/procurement review cites' },
+          clause_count: { type: 'number' },
         },
+        required: ['basis', 'conforms', 'criteria_failed', 'clauses_implicated', 'clause_count'],
         description: '36 CFR 1194 clause mapping derived from the WCAG findings',
+      },
+      StoredReport: {
+        type: 'object',
+        description: 'The object persisted under `report:{id}` (30-day TTL), returned by `/report/{id}.json`. ScanResult fields plus `url`/`ts`; the `issues` list reflects any `level`/`rule` filters applied server-side.',
+        properties: {
+          url: { type: ['string', 'null'], description: 'Scanned URL, or null for pasted-HTML scans' },
+          ts: { type: 'number', description: 'Persist time, epoch ms' },
+          score: { type: 'number', minimum: 0, maximum: 100 },
+          score_model: { type: 'string', enum: ['weighted-v1'] },
+          issues: { type: 'array', items: { $ref: '#/components/schemas/Issue' } },
+          rendered: { type: 'boolean' },
+          plan: { type: 'string', enum: ['free', 'pro'] },
+          render_error: { type: 'string' },
+          site: { type: 'boolean' },
+          pages: { type: 'array', items: { type: 'object', properties: { url: { type: 'string' }, score: { type: 'number' }, count: { type: 'number' } } } },
+          section508: { $ref: '#/components/schemas/Section508' },
+          benchmark: { type: 'object', properties: { pct: { type: 'number' }, sites: { type: 'number' } } },
+        },
+        required: ['url', 'ts', 'score', 'score_model', 'issues', 'rendered', 'plan', 'section508'],
       },
       RuleManifest: {
         type: 'object',

@@ -11,16 +11,29 @@ export interface Issue {
   fix?: string;
   url?: string;
 }
+/** 36 CFR 1194 clause mapping derived from the WCAG findings — 508 defines
+ * no web rules of its own; E205.4 incorporates WCAG 2.0 AA by reference. */
+export interface Section508Report {
+  basis: string;
+  conforms: boolean;
+  criteria_failed: string[];
+  clauses_implicated: string[];
+  clause_count: number;
+}
+/** Score position vs the public scan corpus — present once ≥10 sites on record. */
+export interface Benchmark { pct: number; sites: number; }
 export interface ScanResult {
   score: number;
+  score_model: "weighted-v1";
   issues: Issue[];
   rendered: boolean;
   plan: "free" | "pro";
-  section508: unknown;
+  section508: Section508Report;
   report?: string;
   render_error?: string;
   site?: boolean;
   pages?: { url: string; score: number; count: number }[];
+  benchmark?: Benchmark;
 }
 export interface Rule {
   id: string;
@@ -30,15 +43,19 @@ export interface Rule {
   detection: string;
 }
 export interface StoredReport {
-  url: string;
+  /** Scanned URL, or null for pasted-HTML scans. */
+  url: string | null;
   ts: number;
   score: number;
+  score_model: "weighted-v1";
   rendered: boolean;
+  plan: "free" | "pro";
+  render_error?: string;
   site?: boolean;
   issues: Issue[];
   pages?: { url: string; score: number; count: number }[];
-  section508?: unknown;
-  benchmark?: unknown;
+  section508: Section508Report;
+  benchmark?: Benchmark;
 }
 export interface ReportView { level?: string; rule?: string; }
 
