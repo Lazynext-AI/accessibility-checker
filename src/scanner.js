@@ -7,7 +7,12 @@
 
 export function scanHtml(html) {
   const issues = [];
-  const src = String(html ?? "");
+  // Element rules run with <script> bodies stripped — JS strings routinely
+  // carry markup-shaped text ("<img ...>", 'id="x"') that would otherwise
+  // double-count real elements. Tag attributes survive (src=, type= stay
+  // matchable); scripts inside serialized shadow templates don't execute
+  // anyway, so stripping them is semantically correct too.
+  const src = String(html ?? "").replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, "<script$1></script>");
   if (!src.trim()) return [{ rule: "empty", message: "No HTML content to scan" }];
   const lower = src.toLowerCase();
 

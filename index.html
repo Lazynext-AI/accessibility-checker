@@ -46,7 +46,7 @@
         <input id="url" type="url" placeholder="https://example.com" aria-label="Website URL">
         <button id="go">Scan</button>
     </div>
-    <div class="row">
+    <p class="row">
         <input id="license" type="email" placeholder="Pro license (your purchase email) — optional" aria-label="Pro license email" autocomplete="email" style="flex:.6">
         <a id="pro" href="https://accessibility-checker.dry-hall-6a50.workers.dev/checkout" style="align-self:center">Start 14-day free trial →</a>
         <a id="cancel" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">cancel</a>
@@ -54,10 +54,10 @@
         <label style="align-self:center;font-size:.8rem;color:#4b5563;display:flex;gap:.3rem;align-items:center;white-space:nowrap"><input id="siteScan" type="checkbox" style="flex:none">whole site</label>
         <a id="monitor" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">monitor daily</a>
         <a id="myMonitors" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">my monitors</a>
-    </div>
+    </p>
     <div id="status" role="status"></div>
     <div id="out"></div>
-    <div id="history" aria-label="Recent scans"></div>
+    <div id="history"></div>
     <p style="color:#4b5563;font-size:.85rem">Free: 3 rendered scans/day. Pro $9/mo after a 14-day free trial: unlimited + email reports. Card required up front; cancel any time.</p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0">
     <p style="font-size:.9rem"><b>Get accessibility tips + product updates</b></p>
@@ -206,10 +206,10 @@
     </script>
 </main>
 <footer>
-    Accessibility Checker by <a href="https://lazynext.com">Lazynext</a> ·
+    <p>Accessibility Checker by <a href="https://lazynext.com">Lazynext</a> ·
     <a href="https://lazynext.com/legal">Terms &amp; privacy</a> ·
     <a href="https://lazynext.com/status">Status</a> ·
-    <a href="mailto:support@lazynext.com">support@lazynext.com</a>
+    <a href="mailto:support@lazynext.com">support@lazynext.com</a></p>
 </footer>
 </body>
 </html>

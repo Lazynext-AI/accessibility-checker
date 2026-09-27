@@ -19,7 +19,12 @@ const FOCUSABLE = "(?:a\\b|button\\b|input\\b|select\\b|textarea\\b|\\w+\\s[^>]*
 
 export function scanAdditionalHtml(html) {
   const issues = [];
-  const src = String(html ?? "");
+  const srcRaw = String(html ?? "");
+  // Element/attribute rules run on `src` with <script> bodies stripped —
+  // markup-shaped JS strings double-count real elements otherwise. The few
+  // checks that intentionally inspect script source (devicemotion listeners,
+  // orientation.lock, Escape-handler tokens, captcha) use `srcRaw`.
+  const src = srcRaw.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, "<script$1></script>");
   if (!src.trim()) return issues;
 
   // WCAG 2.4.6 — empty headings and labels describe nothing.
@@ -326,7 +331,7 @@ export function scanAdditionalHtml(html) {
   // WCAG 2.5.4 (A) — Motion Actuation: functionality triggered by shaking or
   // tilting the device must have a control-based alternative. The listeners
   // are the literal mechanism; nothing else produces them.
-  if (/\bondevice(?:motion|orientation)\s*=|addEventListener\s*\(\s*["']device(?:motion|orientation)["']/i.test(src)) {
+  if (/\bondevice(?:motion|orientation)\s*=|addEventListener\s*\(\s*["']device(?:motion|orientation)["']/i.test(srcRaw)) {
     issues.push({
       rule: "wcag-2.5.4",
       message: "device motion/orientation listener detected — provide a button/control alternative for shake-or-tilt actions",
@@ -336,7 +341,7 @@ export function scanAdditionalHtml(html) {
   // WCAG 1.3.4 (AA) — Orientation: content must not lock to one orientation.
   // screen.orientation.lock() is the literal mechanism (orientation media
   // queries alone are legitimate responsive design, so they are not flagged).
-  if (/\borientation\s*\.\s*lock\s*\(|lockOrientation\s*\(/i.test(src)) {
+  if (/\borientation\s*\.\s*lock\s*\(|lockOrientation\s*\(/i.test(srcRaw)) {
     issues.push({
       rule: "wcag-1.3.4",
       message: "screen orientation lock detected — content must work in both portrait and landscape unless essential",
@@ -348,9 +353,9 @@ export function scanAdditionalHtml(html) {
   // and persistent. Flagged when a handler unhides content and no Escape
   // handling exists anywhere on the page — warn-class heuristic.
   {
-    const reveals = /\bon(?:mouseover|mouseenter|focus)\s*=\s*(["'])[\s\S]*?\1/i.test(src) &&
-      /\b(?:display|visibility|opacity|hidden|classList|style\.)/i.test(src);
-    const escapable = /Escape|keyCode\s*[=!]=+\s*27|key\s*===?\s*["']Escape/i.test(src);
+    const reveals = /\bon(?:mouseover|mouseenter|focus)\s*=\s*(["'])[\s\S]*?\1/i.test(srcRaw) &&
+      /\b(?:display|visibility|opacity|hidden|classList|style\.)/i.test(srcRaw);
+    const escapable = /Escape|keyCode\s*[=!]=+\s*27|key\s*===?\s*["']Escape/i.test(srcRaw);
     if (reveals && !escapable) {
       issues.push({
         rule: "wcag-1.4.13",
@@ -1049,7 +1054,7 @@ export function scanAdditionalHtml(html) {
   // (AA) tolerates object-recognition and personal-content tests, AAA allows
   // no cognitive function test at all — only non-cognitive paths (passkey,
   // OAuth, magic link, copy-paste). CAPTCHA/challenge markup is the signal.
-  if (/g-recaptcha|h-captcha|cf-turnstile|turnstile|hcaptcha|arkose|funcaptcha|geetest|\bcaptcha\b/i.test(src)) {
+  if (/g-recaptcha|h-captcha|cf-turnstile|turnstile|hcaptcha|arkose|funcaptcha|geetest|\bcaptcha\b/i.test(srcRaw)) {
     issues.push({
       rule: "wcag-3.3.9",
       message: "CAPTCHA/cognitive-challenge markup found — at Level AAA authentication needs a fully non-cognitive path (passkey, magic link, OAuth)",
@@ -1190,6 +1195,9 @@ export function checkUseOfColor(styles) {
 export function scanKeyboardStatics(html) {
   const issues = [];
   if (typeof html !== "string" || !html) return issues;
+  // Same <script>-body stripping as scanAdditionalHtml — element and
+  // attribute patterns shouldn't match markup-shaped JS strings.
+  html = html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, "<script$1></script>");
 
   // Inline key handlers that preventDefault() a Tab key event — the literal
   // mechanism of a keyboard trap.

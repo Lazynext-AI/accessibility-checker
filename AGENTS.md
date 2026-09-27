@@ -64,6 +64,20 @@ judgment, and form-submission dynamics are out of scope for the current
 static + rendered + cross-page architecture. `docs/wcag-coverage.md` is
 generated from the live manifest — regenerate, don't hand-edit.
 
+**Shadow DOM**: the rendered path serializes open shadow roots into
+`<template shadowrootmode>` nodes inside `page.html` (platform `scrape.ts`),
+so markup rules cover encapsulated content, and the focus census/trace
+pierce open roots. **Closed shadow roots stay opaque** — they cannot be
+pierced by design, an honest gap. `shadow.html` is the live verification
+fixture.
+
+**`<script>` bodies are stripped before element rules run** (`scanner.js`,
+`wcag22.js`, `additional.js`, `scanKeyboardStatics`) — markup-shaped JS
+strings double-count real elements otherwise. Rules that intentionally
+inspect script source (`addEventListener('devicemotion')`, `orientation.lock`,
+Escape-handler tokens, captcha) read `srcRaw` in `additional.js`. Script
+tags' attributes survive the strip (`src=` stays matchable).
+
 ## File map
 
 - `worker.js` — routes + KV/platform helpers (`kvGet`, `kvPut`, `rlHit`,

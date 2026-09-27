@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { scanAdditionalHtml, checkContrastAAA, checkUseOfColor } from "../src/rules/additional.js";
+import { scanHtml } from "../src/scanner.js";
 
 const rules = (issues) => issues.map((i) => i.rule);
 
@@ -636,4 +637,23 @@ test("plain prose not flagged (3.1.5)", () => {
 });
 test("short content skipped (3.1.5)", () => {
   assert.ok(!rules(scanAdditionalHtml('<p>Short page.</p>')).includes("wcag-3.1.5"));
+});
+
+// <script>-body stripping — JS strings carry markup-shaped text that must not
+// double-count real elements. Pinned by the shadow-DOM work: serialized
+// shadow templates made this visible (an <img> built via innerHTML appeared
+// both as a JS literal and as a real serialized element).
+test("img markup inside <script> strings is not counted", () => {
+  const page = '<html><head><title>t</title></head><body><script>const s = "<img src=x.png>";</script><img src="a.png"></body></html>';
+  const imgs = scanHtml(page).filter((i) => i.rule === "wcag-1.1.1");
+  assert.equal(imgs.length, 1);
+  assert.ok(imgs[0].message.includes('src="a.png"'));
+});
+test("id assignment inside <script> does not read as a duplicate id", () => {
+  const page = '<html><head><title>t</title></head><body><script>el.id = "dup";</script><div id="dup"></div></body></html>';
+  assert.ok(!scanAdditionalHtml(page).some((i) => i.rule === "wcag-4.1.1"));
+});
+test("script-aware checks still see script source (devicemotion)", () => {
+  const page = '<html><head><title>t</title></head><body><script>window.addEventListener("devicemotion", f);</script></body></html>';
+  assert.ok(rules(scanAdditionalHtml(page)).includes("wcag-2.5.4"));
 });

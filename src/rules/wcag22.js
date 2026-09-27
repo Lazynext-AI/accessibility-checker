@@ -16,7 +16,9 @@
 
 export function scanWcag22(html) {
   const issues = [];
-  const src = String(html ?? "");
+  // Element rules run with <script> bodies stripped — markup-shaped JS
+  // strings would double-count real elements (see src/scanner.js).
+  const src = String(html ?? "").replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, "<script$1></script>");
   if (!src.trim()) return issues;
 
   // WCAG 3.3.8 — Accessible Authentication (Minimum): credential fields must
