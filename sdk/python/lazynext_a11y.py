@@ -74,6 +74,16 @@ class AccessibilityChecker:
         except urllib.error.HTTPError as e:
             raise CheckerError(e.code, "report not found or expired") from e
 
+    def report(self, report_id, level=None, rule=None):
+        """Stored report as the parsed JSON object — score, issues, pages,
+        section508. level/rule apply the same view filters as the web report."""
+        q = urllib.parse.urlencode({k: v for k, v in (("level", level), ("rule", rule)) if v})
+        try:
+            with urllib.request.urlopen(f"{self.base_url}/report/{report_id}.json{'?' + q if q else ''}", timeout=30) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            raise CheckerError(e.code, "report not found or expired") from e
+
     def report_url(self, report_id):
         return f"{self.base_url}/report/{report_id}"
 

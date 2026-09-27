@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -152,6 +153,38 @@ func (c *Client) Rules() ([]Rule, error) {
 // ReportURL / BadgeURL build the public links for a stored report id.
 func (c *Client) ReportURL(id string) string { return c.BaseURL + "/report/" + id }
 func (c *Client) BadgeURL(id string) string  { return c.BaseURL + "/badge/" + id + ".svg" }
+
+// StoredReport is the persisted scan report served at /report/{id}.json
+// (30-day TTL) — the raw findings export.
+type StoredReport struct {
+	URL      string  `json:"url"`
+	Ts       int64   `json:"ts"`
+	Score    int     `json:"score"`
+	Rendered bool    `json:"rendered"`
+	Site     bool    `json:"site,omitempty"`
+	Issues   []Issue `json:"issues"`
+	Pages    []struct {
+		URL   string `json:"url"`
+		Score int    `json:"score"`
+		Count int    `json:"count"`
+	} `json:"pages,omitempty"`
+	Section508 map[string]any `json:"section508,omitempty"`
+	Benchmark  map[string]any `json:"benchmark,omitempty"`
+}
+
+// Report fetches a stored report's raw findings via the .json export.
+// view applies the web view's filters, e.g. Report(id, "level=A").
+func (c *Client) Report(id string, view ...string) (*StoredReport, error) {
+	p := "/report/" + url.PathEscape(id) + ".json"
+	if len(view) > 0 {
+		p += "?" + strings.Join(view, "&")
+	}
+	var rep StoredReport
+	if err := c.do("GET", p, nil, &rep); err != nil {
+		return nil, err
+	}
+	return &rep, nil
+}
 
 // ReportCSV fetches a stored report as CSV.
 func (c *Client) ReportCSV(id string) (string, error) {

@@ -3,7 +3,7 @@
 //   lazynext-a11y scan https://example.com [--site] [--license KEY]
 //   lazynext-a11y scan-html page.html
 //   lazynext-a11y rules [--pretty]
-//   lazynext-a11y report <id>          # CSV to stdout
+//   lazynext-a11y report <id> [--json] # CSV (or raw JSON object) to stdout
 //   lazynext-a11y monitor list|add|remove [url] --license KEY
 //   lazynext-a11y agent-card
 // Flags: --api URL (or LAZYNEXT_A11Y_API), --license KEY (or LAZYNEXT_A11Y_LICENSE)
@@ -21,6 +21,7 @@ COMMANDS
   scan-html <file>        Scan pasted/local HTML — no quota, no render
   rules                   Full WCAG coverage manifest (JSON)
   report <id>             Stored report as CSV on stdout
+                          (--json → parsed object; --level/--rule filter)
   report-url <id>         Print the HTML report URL
   badge <id>              Print the badge SVG URL
   monitor list            List Pro monitors (needs --license)
@@ -30,6 +31,9 @@ COMMANDS
 
 FLAGS
   --site                  Crawl same-origin pages (3 free / 10 Pro)
+  --json                  report: emit the raw report object (JSON export)
+  --level <A|AA|AAA|BP>   report --json: filter findings by conformance level
+  --rule <id>             report --json: filter findings by rule id
   --api <base>            API base (default https://checker.lazynext.com;
                           env: LAZYNEXT_A11Y_API)
   --license <key>         Pro license key (env: LAZYNEXT_A11Y_LICENSE)
@@ -52,6 +56,9 @@ function parse(argv) {
     if (a === "--api") args.api = argv[++i];
     else if (a === "--license") args.license = argv[++i];
     else if (a === "--site") args.site = true;
+    else if (a === "--json") args.json = true;
+    else if (a === "--level") args.level = argv[++i];
+    else if (a === "--rule") args.rule = argv[++i];
     else if (a === "--pretty") args.pretty = true;
     else if (a === "-h" || a === "--help") args.help = true;
     else if (a === "-v" || a === "--version") args.ver = true;
@@ -98,7 +105,8 @@ async function main() {
       break;
     case "report": {
       const id = a.pos[1] ?? usage("report needs a report id");
-      process.stdout.write(await c.reportCsv(id));
+      if (a.json) out(await c.report(id, { level: a.level, rule: a.rule }), a.pretty);
+      else process.stdout.write(await c.reportCsv(id));
       break;
     }
     case "report-url": {

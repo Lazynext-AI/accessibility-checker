@@ -29,6 +29,18 @@ export interface Rule {
   wcag: string;
   detection: string;
 }
+export interface StoredReport {
+  url: string;
+  ts: number;
+  score: number;
+  rendered: boolean;
+  site?: boolean;
+  issues: Issue[];
+  pages?: { url: string; score: number; count: number }[];
+  section508?: unknown;
+  benchmark?: unknown;
+}
+export interface ReportView { level?: string; rule?: string; }
 
 export class AccessibilityChecker {
   constructor(opts?: CheckerOptions);
@@ -36,6 +48,7 @@ export class AccessibilityChecker {
   license: string;
   scan(opts: ScanOptions): Promise<ScanResult>;
   site(url: string): Promise<ScanResult>;
+  report(id: string, view?: ReportView): Promise<StoredReport>;
   reportCsv(id: string): Promise<string>;
   reportUrl(id: string): string;
   badgeUrl(id: string): string;

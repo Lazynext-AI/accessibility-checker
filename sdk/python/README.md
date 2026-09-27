@@ -15,6 +15,8 @@ result = c.site("https://example.com")           # same-origin crawl
 
 print(c.report_url(result["id"]))                # HTML report
 print(c.report_csv(result["id"]))                # CSV export
+print(c.report(result["id"])["score"])           # parsed JSON object
+print(c.report(result["id"], level="A"))         # level-filtered findings
 print(c.rules())                                 # full coverage manifest
 
 c.monitor_add("https://example.com")             # Pro: daily rescan + alert

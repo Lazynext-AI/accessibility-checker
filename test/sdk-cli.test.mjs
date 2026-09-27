@@ -42,6 +42,10 @@ before(async () => {
         res.setHeader('content-type', 'text/csv');
         return res.end('rule,criterion,impact\nwcag-1.1.1,alt text,serious\n');
       }
+      if (req.url?.startsWith('/report/r1.json')) {
+        res.setHeader('content-type', 'application/json');
+        return res.end(JSON.stringify({ score: 80, issues: [{ rule: 'wcag-1.1.1', message: 'img missing alt' }] }));
+      }
       if (req.url?.startsWith('/monitor')) {
         res.setHeader('content-type', 'application/json');
         return res.end(JSON.stringify({ monitors: [] }));
@@ -131,6 +135,22 @@ test('report <id> writes the CSV to stdout', async () => {
   const r = await run(['report', 'r1', '--api', base]);
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^rule,criterion,impact\nwcag-1\.1\.1/);
+});
+
+test('report <id> --json prints the parsed report object', async () => {
+  requests.length = 0;
+  const r = await run(['report', 'r1', '--json', '--api', base]);
+  assert.equal(r.status, 0, r.stderr);
+  const body = JSON.parse(r.stdout);
+  assert.equal(body.score, 80);
+  assert.equal(requests.at(-1).path, '/report/r1.json');
+});
+
+test('report <id> --json --level forwards the view filter', async () => {
+  requests.length = 0;
+  const r = await run(['report', 'r1', '--json', '--level', 'A', '--api', base]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(requests.at(-1).path, /^\/report\/r1\.json\?level=A/);
 });
 
 test('report-url and badge print URLs without a server call', async () => {

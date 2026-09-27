@@ -48,6 +48,18 @@ export class AccessibilityChecker {
     return r.text();
   }
 
+  // Stored report as the parsed JSON object — score, issues, pages, section508.
+  // view: { level: 'A', rule: 'wcag-1.4.3' } applies the web view's filters.
+  async report(id, view = {}) {
+    const p = new URLSearchParams();
+    if (view.level) p.set("level", view.level);
+    if (view.rule) p.set("rule", view.rule);
+    const q = p.toString();
+    const r = await fetch(`${this.baseUrl}/report/${id}.json${q ? `?${q}` : ""}`);
+    if (!r.ok) throw new Error(`a11y-checker ${r.status}: report not found or expired`);
+    return r.json();
+  }
+
   reportUrl(id) { return `${this.baseUrl}/report/${id}`; }
   badgeUrl(id) { return `${this.baseUrl}/badge/${id}.svg`; }
 

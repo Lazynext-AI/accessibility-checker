@@ -62,12 +62,15 @@ import { AccessibilityChecker } from './sdk/js/index.js';
 const a11y = new AccessibilityChecker({ license: 'buyer@x.com' }); // license optional
 const { score, issues, report } = await a11y.scan({ url: 'https://example.com' });
 await a11y.site('https://example.com');   // same-origin crawl
+await a11y.report(id);                     // stored report object (.json export)
+await a11y.reportCsv(id);                  // CSV export
 await a11y.rules();                        // full coverage manifest
 ```
 
 ```go
 c := checker.New("buyer@x.com")            // license optional
 res, err := c.Scan(checker.ScanOptions{URL: "https://example.com"})
+rep, _ := c.Report(id)                     // stored report object (.json export)
 rules, _ := c.Rules()
 ```
 
@@ -80,7 +83,7 @@ res = c.scan(url="https://example.com")
 ```sh
 lazynext-a11y scan https://example.com --site    # bin/cli.js in sdk/js
 lazynext-a11y rules --pretty
-lazynext-a11y report <id>                        # CSV to stdout
+lazynext-a11y report <id>                        # CSV to stdout (--json for the object)
 lazynext-a11y monitor add <url> --license buyer@x.com
 ```
 
