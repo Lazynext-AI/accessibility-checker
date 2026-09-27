@@ -63,6 +63,12 @@ honestly detect: media semantics, session/timing behavior, NLP-level
 judgment, and form-submission dynamics are out of scope for the current
 static + rendered + cross-page architecture. `docs/wcag-coverage.md` is
 generated from the live manifest — regenerate, don't hand-edit.
+Element detectors must match **markup context**, not bare words: prose can
+contain the trigger word (`\bautofocus\b` fired on the `/rules` catalog's own
+description column; `\bcaptcha\b` matched "CAPTCHA" in text and
+`href="/blog/captcha"` links). Require tag/attribute position
+(`<[a-zA-Z][^>]*\sautofocus\b`, attribute-scoped `class|id|src|data-*` for
+generic terms) — distinctive vendor tokens may stay free-form.
 
 **Shadow DOM**: the rendered path serializes open shadow roots into
 `<template shadowrootmode>` nodes inside `page.html` (platform `scrape.ts`),
