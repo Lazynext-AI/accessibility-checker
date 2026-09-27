@@ -64,7 +64,7 @@ code needed.
 (`accessibility-checker` + `accessibility-checker-api`) is enforced by
 convention via `scripts/deploy.mjs`, but nothing detected a manual
 single-script deploy. `scripts/health_check.py` (launchd, every 15 min) now
-fetches `/rules` — the deterministic 74-rule manifest — from both
+fetches `/rules` — the deterministic 75-rule manifest — from both
 workers.dev origins and fails the `a11y-mirror` check on any byte
 difference or fetch failure, alerting on state transitions like the other
 checks. The same run also covers `checker.lazynext.com`/`api.lazynext.com`
