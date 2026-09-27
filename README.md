@@ -126,6 +126,12 @@ lazynext-a11y monitor add <url> --license buyer@x.com
   pages (2.1.1), focus traps (2.1.2), focus-order gaps and cycles (2.4.3),
   dialog Escape handling; statics catch Tab-swallowing handlers and
   undismissable dialogs on pasted HTML too
+- **Shadow DOM**: rendered scans serialize open shadow roots into
+  `<template shadowrootmode>` markers, so markup rules cover encapsulated
+  content; the focus census and Tab trace pierce open roots too. Closed
+  roots can't be pierced by design — an honest gap. Element rules ignore
+  `<script>` bodies, so markup-shaped JS strings can't double-count real
+  elements
 - **Cross-page** (`src/rules/crosspage.js`, site scans): consistent
   navigation (3.2.3), consistent identification (3.2.4), consistent help
   mechanisms (3.2.6)
