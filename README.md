@@ -64,9 +64,24 @@ res, err := c.Scan(checker.ScanOptions{URL: "https://example.com"})
 rules, _ := c.Rules()
 ```
 
-- `sdk/js` — `index.js` + `index.d.ts`, zero deps, Node 18+ and browsers
+```python
+from lazynext_a11y import AccessibilityChecker   # sdk/python, stdlib only
+c = AccessibilityChecker(license="buyer@x.com")  # license optional
+res = c.scan(url="https://example.com")
+```
+
+```sh
+lazynext-a11y scan https://example.com --site    # bin/cli.js in sdk/js
+lazynext-a11y rules --pretty
+lazynext-a11y report <id>                        # CSV to stdout
+lazynext-a11y monitor add <url> --license buyer@x.com
+```
+
+- `sdk/js` — `index.js` + `index.d.ts`, zero deps, Node 18+ and browsers;
+  `bin:` entry `lazynext-a11y` (`node sdk/js/bin/cli.js` pre-install)
 - `sdk/go` — `checker` package, standard library only (`go build` clean)
-- `scripts/ci-scan.mjs` — standalone CLI: `node scripts/ci-scan.mjs --url <u> --fail-under 80`
+- `sdk/python` — `lazynext_a11y` module, stdlib only (`pip install sdk/python`)
+- `scripts/ci-scan.mjs` — CI gate: `node scripts/ci-scan.mjs --url <u> --fail-under 80`
 
 ## What it checks
 
