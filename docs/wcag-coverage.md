@@ -1,6 +1,7 @@
 # WCAG Coverage Reference
 
-75 success criteria implemented across three detection layers. This document
+74 WCAG success criteria + 1 best-practice check implemented across three
+detection layers. This document
 is the authoritative map: each rule, its WCAG level/version, the detection
 layer that evaluates it, and what it flags. Live source: `GET /rules`.
 
@@ -8,7 +9,7 @@ Layers: **static** = string-scan of fetched HTML (every scan), **rendered** =
 Browser Rendering trace (contrast census, focus cycle, target measurements),
 **crosspage** = multi-page consistency (site scans only).
 
-## Static layer (55 criteria)
+## Static layer (54 criteria)
 
 | Criterion | Level | WCAG | What it flags |
 |---|---|---|---|
@@ -55,7 +56,6 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-3.1.5 — Reading Level | AAA | 2.0 | prose estimated beyond lower-secondary grade (Flesch–Kincaid >9 on ≥150 words) — needs a simplified alternative (warn-class) |
 | wcag-3.2.1 — On Focus | A | 2.0 | autofocus and onfocus handlers that navigate/submit/click |
 | wcag-3.2.2 — On Input | A | 2.0 | onchange/oninput auto-submission and select jump-menus |
-| wcag-3.2.7 — Visible Controls | AAA | 2.2 | controls hidden by default revealed on :hover with no focus/focus-within counterpart — warn-class heuristic |
 | wcag-3.3.1 — Error Identification | A | 2.0 | controls marked invalid with no associated error text (aria-errormessage/describedby) — warn-class |
 | wcag-3.3.2 — Labels or Instructions | A | 2.0 | inputs without label/aria-label/aria-labelledby (placeholders don't count) |
 | wcag-3.3.3 — Error Suggestion | AA | 2.0 | invalid control whose error text names the failure but suggests no correction — warn-class |
@@ -97,6 +97,15 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-3.2.3 — Consistent Navigation | AA | 2.0 | shared nav links appearing in different relative order across pages |
 | wcag-3.2.4 — Consistent Identification | AA | 2.0 | same link target carrying different accessible names on different pages |
 | wcag-3.2.6 — Consistent Help | A | 2.2 | help mechanisms missing on some pages or appearing in inconsistent order |
+
+## Best-practice checks (not numbered criteria)
+
+Checks for real problems no published criterion covers. `level: BP`, no
+conformance claim — filterable via `?level=BP` on reports.
+
+| Check | What it flags |
+|---|---|
+| bp-visible-controls — Visible Controls | controls hidden by default revealed on :hover with no focus/focus-within counterpart — warn-class heuristic. Drafted as WCAG 2.2 SC 3.2.7 but removed before the final spec (w3c/wcag#3587), so reported as best practice, not a criterion |
 
 ---
 

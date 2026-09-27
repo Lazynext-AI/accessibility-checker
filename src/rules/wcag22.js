@@ -81,8 +81,12 @@ export function scanWcag22(html) {
     });
   }
 
-  // WCAG 3.2.7 — Visible Controls (AAA): interactive controls that only
-  // appear on pointer hover give keyboard users no visible target. The
+  // Visible Controls — best-practice check (emits bp-visible-controls):
+  // interactive controls that only appear on pointer hover give keyboard
+  // users no visible target. Drafted as WCAG 2.2 SC 3.2.7 but REMOVED from
+  // the final spec (w3c/wcag#3587 — the WG found no binary pass/fail rule
+  // survived testing), so published WCAG 2.2 has no 3.2.7. Kept as a
+  // warn-class best-practice finding, not a criterion claim. The
   // failure signature in CSS: a hidden-by-default rule (opacity:0,
   // visibility:hidden, display:none) plus a :hover reveal, with no matching
   // :focus/:focus-visible/:focus-within reveal for the same target.
@@ -124,7 +128,7 @@ export function scanWcag22(html) {
       const tail = key.split(/\s+/).pop();
       if (hiddenSel.has(key) || hiddenSel.has(tail)) {
         issues.push({
-          rule: "wcag-3.2.7",
+          rule: "bp-visible-controls",
           message: `control hidden by default is revealed on :hover only — verify keyboard users can reveal it (needs a :focus/:focus-within counterpart): ${orig.slice(0, 80)}`,
         });
       }

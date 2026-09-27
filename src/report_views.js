@@ -1,12 +1,12 @@
 // report_views.js — shareable-report view customization.
 // Report URLs are shared between people, so every view is a plain GET with
 // query params — no client JS (the report CSP forbids it anyway):
-//   ?level=A|AA|AAA   findings at one conformance level
+//   ?level=A|AA|AAA|BP findings at one level (BP = best-practice checks, no WCAG conformance)
 //   ?rule=wcag-1.1.1  single-criterion view — deep-link a specific failure
 //   ?by=page          group findings under the page they fired on (site scans)
 // CSV and PDF exports take the same params, so an export matches the view.
 
-const LEVELS = ['A', 'AA', 'AAA'];
+const LEVELS = ['A', 'AA', 'AAA', 'BP'];
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -43,7 +43,7 @@ function viewHref(id, view, ext = '') {
 
 // Filter/sort nav with live counts so the reader sees what a view hides.
 function viewNav(id, rep, ruleInfo, view, shown) {
-  const counts = { A: 0, AA: 0, AAA: 0 };
+  const counts = { A: 0, AA: 0, AAA: 0, BP: 0 };
   const total = (rep.issues ?? []).length;
   for (const i of rep.issues ?? []) {
     const l = ruleInfo[i.rule]?.level;

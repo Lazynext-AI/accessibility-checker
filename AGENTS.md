@@ -54,8 +54,11 @@ check and silently gets the 60s floor.
 
 ## Coverage honesty
 
-`/rules` exposes the current manifest (75 rules — keep README/docs counts in
-sync whenever it changes). Do not claim criteria the scanner cannot
+`/rules` exposes the current manifest (74 WCAG criteria + 1 `bp-` best-practice
+check — keep README/docs counts in sync whenever it changes). Best-practice
+checks exist for real problems with no published criterion (e.g.
+`bp-visible-controls`: SC 3.2.7 was cut from WCAG 2.2 before release, so it
+must never be labeled `wcag-3.2.7` or claim a conformance level). Do not claim criteria the scanner cannot
 honestly detect: media semantics, session/timing behavior, NLP-level
 judgment, and form-submission dynamics are out of scope for the current
 static + rendered + cross-page architecture. `docs/wcag-coverage.md` is

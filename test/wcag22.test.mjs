@@ -56,46 +56,46 @@ test("2.5.7 flags inline drag handlers", () => {
   assert.ok(rules(`<img src="a.png" ondragstart="d()">`).includes("wcag-2.5.7"));
 });
 
-test("3.2.7 flags hover-only reveal with no focus counterpart", () => {
+test("bp-visible-controls flags hover-only reveal with no focus counterpart", () => {
   const issues = scanWcag22(
     `<style>.actions { opacity: 0 } .card:hover .actions { opacity: 1 }</style><div class="card"><button class="actions">go</button></div>`
   );
-  assert.ok(issues.some((i) => i.rule === "wcag-3.2.7"));
+  assert.ok(issues.some((i) => i.rule === "bp-visible-controls"));
 });
 
-test("3.2.7 accepts a focus-within counterpart", () => {
+test("bp-visible-controls accepts a focus-within counterpart", () => {
   assert.deepEqual(
     rules(`<style>.actions { opacity: 0 } .card:hover .actions { opacity: 1 } .card:focus-within .actions { opacity: 1 }</style>`),
     []
   );
 });
 
-test("3.2.7 accepts a :focus-visible counterpart on the same selector", () => {
+test("bp-visible-controls accepts a :focus-visible counterpart on the same selector", () => {
   assert.deepEqual(
     rules(`<style>button.ghost { opacity: 0 } button.ghost:hover { opacity: 1 } button.ghost:focus-visible { opacity: 1 }</style>`),
     []
   );
 });
 
-test("3.2.7 flags display:none hover reveal without focus", () => {
+test("bp-visible-controls flags display:none hover reveal without focus", () => {
   const issues = scanWcag22(
     `<style>.menu button { display: none } .menu:hover button { display: block }</style>`
   );
-  assert.ok(issues.some((i) => i.rule === "wcag-3.2.7"));
+  assert.ok(issues.some((i) => i.rule === "bp-visible-controls"));
 });
 
-test("3.2.7 ignores hover styling when nothing is hidden", () => {
+test("bp-visible-controls ignores hover styling when nothing is hidden", () => {
   assert.deepEqual(
     rules(`<style>a:hover { opacity: 0.8 } button:hover { display: block }</style>`),
     []
   );
 });
 
-test("3.2.7 flags visibility:hidden revealed only on :hover", () => {
+test("bp-visible-controls flags visibility:hidden revealed only on :hover", () => {
   const issues = scanWcag22(
     `<style>.tools { visibility: hidden } li:hover .tools { visibility: visible }</style>`
   );
-  assert.ok(issues.some((i) => i.rule === "wcag-3.2.7"));
+  assert.ok(issues.some((i) => i.rule === "bp-visible-controls"));
 });
 
 test("clean html produces no issues", () => {
