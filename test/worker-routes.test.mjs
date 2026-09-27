@@ -120,8 +120,8 @@ test('GET /rules returns the full coverage manifest', async () => {
   const r = await get('/rules');
   assert.equal(r.status, 200);
   const body = await r.json();
-  assert.equal(body.count, 74);
-  assert.equal(body.rules.length, 74);
+  assert.equal(body.count, 75);
+  assert.equal(body.rules.length, 75);
   const ids = new Set(body.rules.map((x) => x.rule));
   for (const id of ['wcag-1.1.1', 'wcag-2.1.2', 'wcag-2.5.8', 'wcag-3.3.8', 'wcag-4.1.3'])
     assert.ok(ids.has(id), `missing ${id}`);

@@ -64,6 +64,7 @@ const FIXES = {
   "wcag-3.2.4": "Use one label per destination site-wide — the same link target should read the same everywhere.",
   "wcag-3.2.5": "Only launch new windows/tabs on request — warn users before opening them automatically.",
   "wcag-3.2.6": "Keep help mechanisms (contact, support, FAQ links) in the same order on every page that offers them.",
+  "wcag-3.2.7": "Controls hidden until needed must appear on keyboard focus too — pair every :hover reveal with a :focus or :focus-within rule.",
   "wcag-3.3.1": "Describe each input error in text and link it — aria-errormessage or aria-describedby pointing at the message element.",
   "wcag-3.3.2": "Give every input a label, aria-label, or aria-labelledby — placeholders are not labels.",
   "wcag-3.3.3": "Error messages should suggest a fix — state the expected format or give a valid example, not just \"invalid\".",

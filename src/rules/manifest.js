@@ -71,6 +71,7 @@ export const RULES = [
   { rule: "wcag-3.2.4",  name: "Consistent Identification", level: "AA",  wcag: "2.0", how: "crosspage", detects: "same link target carrying different accessible names on different pages" },
   { rule: "wcag-3.2.5",  name: "Change on Request",         level: "AAA", wcag: "2.0", how: "rendered",  detects: "target=_blank links without rel=noopener (context changes users can't control)" },
   { rule: "wcag-3.2.6",  name: "Consistent Help",           level: "A",   wcag: "2.2", how: "crosspage", detects: "help mechanisms missing on some pages or appearing in inconsistent order" },
+  { rule: "wcag-3.2.7",  name: "Visible Controls",          level: "AAA", wcag: "2.2", how: "static",    detects: "controls hidden by default revealed on :hover with no focus/focus-within counterpart — warn-class heuristic" },
   { rule: "wcag-3.3.1",  name: "Error Identification",      level: "A",   wcag: "2.0", how: "static",    detects: "controls marked invalid with no associated error text (aria-errormessage/describedby) — warn-class" },
   { rule: "wcag-3.3.2",  name: "Labels or Instructions",    level: "A",   wcag: "2.0", how: "static",    detects: "inputs without label/aria-label/aria-labelledby (placeholders don't count)" },
   { rule: "wcag-3.3.3",  name: "Error Suggestion",          level: "AA",  wcag: "2.0", how: "static",    detects: "invalid control whose error text names the failure but suggests no correction — warn-class" },

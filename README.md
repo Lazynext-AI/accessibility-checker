@@ -26,7 +26,7 @@ scanned by this tool, shown once ≥10 sites are in),
 `POST /lead` (email capture), `GET /report/:id` (shareable report —
 `?level=A|AA|AAA`, `?rule=<id>`, `?by=page` views; CSV/PDF exports honor them),
 `GET /badge/:id.svg` (embeddable score badge for a report),
-`GET /rules` (the 74-rule coverage manifest — name, level, WCAG version,
+`GET /rules` (the 75-rule coverage manifest — name, level, WCAG version,
 and detection path for every criterion the scanner emits),
 `POST /monitor` / `GET /monitor?license=` / `DELETE /monitor` (Pro daily
 monitoring — platform rescans each registered URL and emails a Brevo

@@ -54,7 +54,7 @@ check and silently gets the 60s floor.
 
 ## Coverage honesty
 
-`/rules` exposes the current manifest (74 rules — keep README/docs counts in
+`/rules` exposes the current manifest (75 rules — keep README/docs counts in
 sync whenever it changes). Do not claim criteria the scanner cannot
 honestly detect: media semantics, session/timing behavior, NLP-level
 judgment, and form-submission dynamics are out of scope for the current

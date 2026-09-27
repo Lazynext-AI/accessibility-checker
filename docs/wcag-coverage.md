@@ -1,6 +1,6 @@
 # WCAG Coverage Reference
 
-74 success criteria implemented across three detection layers. This document
+75 success criteria implemented across three detection layers. This document
 is the authoritative map: each rule, its WCAG level/version, the detection
 layer that evaluates it, and what it flags. Live source: `GET /rules`.
 
@@ -8,7 +8,7 @@ Layers: **static** = string-scan of fetched HTML (every scan), **rendered** =
 Browser Rendering trace (contrast census, focus cycle, target measurements),
 **crosspage** = multi-page consistency (site scans only).
 
-## Static layer (54 criteria)
+## Static layer (55 criteria)
 
 | Criterion | Level | WCAG | What it flags |
 |---|---|---|---|
@@ -55,6 +55,7 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-3.1.5 — Reading Level | AAA | 2.0 | prose estimated beyond lower-secondary grade (Flesch–Kincaid >9 on ≥150 words) — needs a simplified alternative (warn-class) |
 | wcag-3.2.1 — On Focus | A | 2.0 | autofocus and onfocus handlers that navigate/submit/click |
 | wcag-3.2.2 — On Input | A | 2.0 | onchange/oninput auto-submission and select jump-menus |
+| wcag-3.2.7 — Visible Controls | AAA | 2.2 | controls hidden by default revealed on :hover with no focus/focus-within counterpart — warn-class heuristic |
 | wcag-3.3.1 — Error Identification | A | 2.0 | controls marked invalid with no associated error text (aria-errormessage/describedby) — warn-class |
 | wcag-3.3.2 — Labels or Instructions | A | 2.0 | inputs without label/aria-label/aria-labelledby (placeholders don't count) |
 | wcag-3.3.3 — Error Suggestion | AA | 2.0 | invalid control whose error text names the failure but suggests no correction — warn-class |
