@@ -27,7 +27,9 @@ scanned by this tool, shown once ≥10 sites are in),
 `?level=A|AA|AAA|BP`, `?rule=<id>`, `?by=page` views; CSV/PDF exports honor them),
 `GET /badge/:id.svg` (embeddable score badge for a report),
 `GET /rules` (the coverage manifest — 74 WCAG criteria + 1 best-practice
-check; name, level, WCAG version, and detection path for every check emitted),
+check; name, level, WCAG version, and detection path for every check emitted;
+`Accept: text/html` returns a browsable catalog, JSON is the default),
+`GET /openapi.json` (OpenAPI 3.1 contract for the whole REST surface),
 `POST /monitor` / `GET /monitor?license=` / `DELETE /monitor` (Pro daily
 monitoring — platform rescans each registered URL and emails a Brevo
 alert when a page's score drops ≥ 10 points), `GET /health`.
@@ -152,8 +154,10 @@ lazynext-a11y monitor add <url> --license buyer@x.com
 - `worker.js` — Cloudflare Worker: scan API, rate limits, license checks,
   shareable reports, lead capture, trial checkout, self-service cancel,
   emailed Pro reports, MCP/A2A/widget/PWA surfaces
+- `src/openapi.js` — OpenAPI 3.1 contract served at `/openapi.json`;
+  `src/rules_catalog.js` — the HTML coverage catalog `/rules` negotiates to
 - `index.html` — the Pages site (scan UI, site scans, monitors, trial CTA,
-  cancel, email-report opt-in, 402 lead funnel)
+  cancel, email-report opt-in, 402 lead funnel, localStorage scan history)
 - `action.yml` + `scripts/ci-scan.mjs` — GitHub Action for CI gating
 
 ## GitHub Action

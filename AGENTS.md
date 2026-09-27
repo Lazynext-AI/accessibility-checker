@@ -76,6 +76,11 @@ generated from the live manifest — regenerate, don't hand-edit.
 - `src/report_views.js` — report view customization (`?level=`, `?rule=`,
   `?by=page`) + CSV/HTML rendering for `/report/:id` — **not** a protected
   file, so report-surface changes belong here, not in `worker.js`
+- `src/openapi.js` — the OpenAPI 3.1 doc at `GET /openapi.json`; hand-maintained
+  with worker.js, kept honest by `test/openapi.test.mjs` (asserts every route
+  literal in worker.js is declared). A new route without a spec entry fails CI.
+- `src/rules_catalog.js` — the browsable catalog `/rules` serves for
+  `Accept: text/html` (JSON stays default; responses carry `Vary: Accept`)
 - `src/rules/` — WCAG rule modules + `manifest.js` (the `/rules` source)
 - `scripts/deploy.mjs` — the only supported deploy path
 - `scripts/sync-page.mjs` — regenerates `index.html` + fixture serving list

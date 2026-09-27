@@ -6,6 +6,10 @@ quota, one scanner, and one report store — switching protocols does not bypass
 the free limit (3 URL scans/day/IP; HTML scans are unquota'd), and every scan
 persists a report retrievable from any surface.
 
+**REST contract:** `GET /openapi.json` is the OpenAPI 3.1 document for the
+whole HTTP surface — generate clients from it, or hand it to any tool that
+imports a spec.
+
 ## MCP — Model Context Protocol
 
 **Endpoint:** `POST /mcp` · JSON-RPC 2.0 · spec `2025-03-26` (streamable-HTTP

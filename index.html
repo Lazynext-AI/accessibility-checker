@@ -57,6 +57,7 @@
     </div>
     <div id="status" role="status"></div>
     <div id="out"></div>
+    <div id="history" aria-label="Recent scans"></div>
     <p style="color:#4b5563;font-size:.85rem">Free: 3 rendered scans/day. Pro $9/mo after a 14-day free trial: unlimited + email reports. Card required up front; cancel any time.</p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0">
     <p style="font-size:.9rem"><b>Get accessibility tips + product updates</b></p>
@@ -86,6 +87,43 @@
         }
         const urlEl = document.getElementById("url"), go = document.getElementById("go");
         const statusEl = document.getElementById("status"), out = document.getElementById("out");
+        // Recent scans — localStorage only (no account, no server round-trip).
+        // Entries expire with the 30-day report TTL, so dead links can't linger.
+        const HKEY = "a11y:history", REPORT_TTL = 30 * 864e5;
+        const histEl = document.getElementById("history");
+        const readHist = () => {
+            try { return (JSON.parse(localStorage.getItem(HKEY)) ?? []).filter(h => h && h.r && Date.now() - h.t < REPORT_TTL); }
+            catch { return []; }
+        };
+        const renderHist = () => {
+            const items = readHist();
+            histEl.replaceChildren();
+            if (!items.length) return;
+            const h = document.createElement("p");
+            h.style.cssText = "font-size:.8rem;color:#4b5563;margin:1.2rem 0 .3rem;font-weight:600";
+            h.textContent = "Recent scans";
+            histEl.appendChild(h);
+            for (const it of items) {
+                const row = document.createElement("div");
+                row.style.cssText = "font-size:.82rem;padding:.2rem 0;display:flex;gap:.6rem;align-items:baseline";
+                const a = document.createElement("a");
+                a.href = it.r; a.textContent = "report"; a.style.flex = "none";
+                const u = document.createElement("span");
+                u.textContent = it.u;
+                u.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151";
+                const meta = document.createElement("span");
+                meta.style.cssText = "flex:none;color:#6b7280";
+                meta.textContent = `${it.s}/100 · ${new Date(it.t).toLocaleDateString()}`;
+                row.append(meta, u, a);
+                histEl.appendChild(row);
+            }
+        };
+        const addHist = (u, report, s) => {
+            const items = [{ u, r: report, s, t: Date.now() }, ...readHist().filter(h => h.r !== report)].slice(0, 10);
+            try { localStorage.setItem(HKEY, JSON.stringify(items)); } catch { /* private mode */ }
+            renderHist();
+        };
+        renderHist();
         go.addEventListener("click", async () => {
             const url = urlEl.value.trim();
             if (!/^https?:\/\//i.test(url)) { statusEl.textContent = "Enter a full URL (https://…)"; return; }
@@ -107,6 +145,7 @@
                     return;
                 }
                 if (!r.ok) throw new Error(d.error || r.statusText);
+                if (d.report) addHist(url, d.report, d.score);
                 statusEl.innerHTML = `Score: <span id="score">${d.score}</span>/100` + (d.site ? ` · ${d.pages.length} pages` : d.rendered ? " · rendered" : " · static") + (d.benchmark ? ` · better than ${d.benchmark.pct}% of ${d.benchmark.sites} sites` : "") + (d.report ? ` · <a href="${d.report}" target="_blank">share report</a>` : "");
                 out.innerHTML = (d.site ? d.pages.map(p => `<div class="issue" style="border-left-color:#4f46e5"><div class="rule">${p.url}</div>score ${p.score}/100 · ${p.count} issue${p.count === 1 ? "" : "s"}</div>`).join("") : "")
                     + (d.issues.length

@@ -6,6 +6,8 @@ import { STATIC_FILES } from './src/static.js';
 import { runScan } from './src/scan_pipeline.js';
 import { reportView, filterIssues, reportCsv, reportHtml } from './src/report_views.js';
 import { AGENT_CARD, handleMcp, handleA2a, a2aTaskGet, WIDGET_JS } from './src/agent_surfaces.js';
+import { OPENAPI } from './src/openapi.js';
+import { rulesCatalogHtml } from './src/rules_catalog.js';
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -149,7 +151,8 @@ export default {
         checkout: 'GET /checkout', cancel: 'POST /cancel {"license": email}',
         confirm: 'GET /confirm?token=…', monitor: 'GET|POST|DELETE /monitor (Pro)',
         lead: 'POST /lead {"email"}', report: 'GET /report/:id',
-        badge: 'GET /badge/:id.svg', rules: 'GET /rules',
+        badge: 'GET /badge/:id.svg', rules: 'GET /rules (JSON manifest · Accept: text/html → catalog)',
+        openapi: 'GET /openapi.json',
         mcp: 'POST /mcp (JSON-RPC tools: scan_url, scan_html, get_report, list_rules)',
         a2a: 'POST /a2a (message/send, tasks/get) · GET /a2a/tasks/:id · GET /.well-known/agent.json',
         widget: 'GET /widget.js — <script> embed for any site',
@@ -217,7 +220,18 @@ export default {
     // Rule coverage manifest — every WCAG criterion the scanner can emit, with
     // name/level/version/detection path. Makes "X checks" claims verifiable.
     if (get && url.pathname === '/rules') {
-      return respond({ count: RULES.length, rules: RULES });
+      // Content negotiation: browsers get the browsable catalog, API/SDK
+      // callers get the manifest JSON. Vary: Accept keeps shared caches
+      // (and our own HEAD parity) from serving one variant to the other.
+      const vary = { vary: 'Accept' };
+      if ((request.headers.get('accept') ?? '').includes('text/html')) {
+        return new Response(rulesCatalogHtml(url.origin), { headers: { 'content-type': 'text/html; charset=utf-8', ...UI_HEADERS, ...vary } });
+      }
+      return new Response(JSON.stringify({ count: RULES.length, rules: RULES }), { headers: { 'content-type': 'application/json', ...CORS, ...vary } });
+    }
+
+    if (get && url.pathname === '/openapi.json') {
+      return respond(OPENAPI);
     }
 
     // Public score badge — shields-style SVG for a stored report. Scanned sites
