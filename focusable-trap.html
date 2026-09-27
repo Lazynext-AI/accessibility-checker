@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Deep focus fixture</title></head>
+<body>
+  <main>
+    <h1>Deep focus fixture</h1>
+    <a href="#l0">item 0</a>
+    <a href="#l1">item 1</a>
+    <a href="#l2">item 2</a>
+    <a href="#l3">item 3</a>
+    <a href="#l4">item 4</a>
+    <a href="#l5">item 5</a>
+    <a href="#l6">item 6</a>
+    <a href="#l7">item 7</a>
+    <a href="#l8">item 8</a>
+    <button id="c1">cycle one</button>
+    <button id="c2">cycle two</button>
+    <a href="#t0">tail 0</a>
+    <a href="#t1">tail 1</a>
+    <a href="#t2">tail 2</a>
+    <a href="#t3">tail 3</a>
+    <a href="#t4">tail 4</a>
+    <a href="#t5">tail 5</a>
+    <a href="#t6">tail 6</a>
+    <a href="#t7">tail 7</a>
+    <a href="#t8">tail 8</a>
+    <a href="#t9">tail 9</a>
+    <a href="#t10">tail 10</a>
+    <a href="#t11">tail 11</a>
+    <a href="#t12">tail 12</a>
+    <a href="#t13">tail 13</a>
+    <a href="#t14">tail 14</a>
+    <a href="#t15">tail 15</a>
+    <a href="#t16">tail 16</a>
+    <a href="#t17">tail 17</a>
+    <a href="#t18">tail 18</a>
+    <a href="#t19">tail 19</a>
+    <a href="#t20">tail 20</a>
+    <a href="#t21">tail 21</a>
+    <a href="#t22">tail 22</a>
+    <a href="#t23">tail 23</a>
+    <a href="#t24">tail 24</a>
+    <a href="#t25">tail 25</a>
+    <a href="#t26">tail 26</a>
+    <a href="#t27">tail 27</a>
+    <a href="#t28">tail 28</a>
+    <a href="#t29">tail 29</a>
+    <a href="#t30">tail 30</a>
+    <a href="#t31">tail 31</a>
+    <a href="#t32">tail 32</a>
+    <a href="#t33">tail 33</a>
+    <a href="#t34">tail 34</a>
+    <a href="#t35">tail 35</a>
+    <a href="#t36">tail 36</a>
+  </main>
+  <script>
+    // Census = 48 focusables (9 lead links + 2 cycling buttons + 37 tail
+    // links). Once focus enters the button pair it can never leave — the 37
+    // tail links are unreachable by keyboard. A 24-press trace can detect
+    // the cycle but can never satisfy the coverage guard (24 < 48), so the
+    // wcag-2.4.3 "elements never reached" finding only fires once the trace
+    // budget tracks the census (50 presses here).
+    const a = document.getElementById('c1'), b = document.getElementById('c2');
+    for (const el of [a, b]) {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          (e.target === a ? b : a).focus();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

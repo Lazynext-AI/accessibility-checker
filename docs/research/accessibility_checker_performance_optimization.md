@@ -39,8 +39,15 @@ startup is not a bottleneck.
 - **Early exits in the forward trace** — the loop breaks once the diagnostic
   signature is established: a ≥4-press stall (the trap signature the rules
   look for) or every focusable element visited (coverage proven). Subset
-  cycles can't reach full coverage, so they still get the full 24-press
-  window. Same for the Shift+Tab backtrace (break at ≥4-stall).
+  cycles can't reach full coverage, so they run the whole press window.
+  Same for the Shift+Tab backtrace (break at ≥4-stall).
+- **Census-tracking press budget (2026-09-28)** — the coverage guard needs
+  `trace.length >= focusable`, so `maxTab = min(max(focusable + 2, 24), 64)`:
+  every census ≤64 now gets a provable coverage verdict (the old cap went
+  flat at 24 presses for >40 focusables, silently disabling the wcag-2.4.3
+  coverage finding there). Larger pages still get the full 64-press window —
+  coverage stays unprovable, but stall/cycle detection reaches nearly 3×
+  deeper into the tab order than the old 24-press cap.
 - **Browser session reuse** — `puppeteer.sessions()` + `connect` to an idle
   session before falling back to `launch(keep_alive: 120s)`; `disconnect()`
   leaves the browser warm for the next request instead of terminating it.
@@ -54,15 +61,20 @@ startup is not a bottleneck.
   entirely when focus sits on `<body>`.
 
 Result: a minimal page renders+probes in ~7s (was 48-64s). A 1184-focusable
-page runs the full probe suite in ~12s with warm session reuse. Trapped and
+page ran the full probe suite in ~12s with warm session reuse at the old
+24-press cap (~28s at the current 64-press budget — the price of the deeper
+tab-order window). Trapped and
 keyboard-inaccessible pages are the fastest class — the gate fires before
 the deep probes. trap.html/trap2.html verified end-to-end post-change with
-identical wcag-2.4.3 + wcag-2.1.2 findings.
+identical wcag-2.4.3 + wcag-2.1.2 findings; focusable-trap.html (48
+focusables, mid-page cycle) verifies the coverage guard now fires past the
+old 40-element boundary, and focusable-clean.html (50 focusables) verifies
+the extended band returns a conclusive clean verdict.
 
 ## Remaining levers (not yet needed)
 
-- Adaptive trace depth: pages with `focusable > 24` can never satisfy the
-  coverage guard — the cap could drop to ~16 presses for cycle-only detection.
+- Coverage stays unprovable for censuses >64 focusables — deeper interactive
+  reach would need a smarter traversal than linear Tab presses.
 - Scan-level caching by URL hash for repeat scans within a TTL window.
 - Click-probe sleeps are wall-clock (350ms per trigger) and could shrink
   with a `waitForSelector`-style poll instead of a fixed delay.
