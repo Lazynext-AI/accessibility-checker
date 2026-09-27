@@ -101,7 +101,8 @@ tags' attributes survive the strip (`src=` stays matchable).
   agent card, `WIDGET_JS` (a **scan form**, not a chat — its `/scan` calls
   are already quota-gated)
 - `src/report_views.js` — report view customization (`?level=`, `?rule=`,
-  `?by=page`) + CSV/HTML rendering for `/report/:id` — **not** a protected
+  `?by=page`) + CSV/HTML rendering for `/report/:id` (`.json` returns the stored
+  report object — the machine-readable export) — **not** a protected
   file, so report-surface changes belong here, not in `worker.js`
 - `src/openapi.js` — the OpenAPI 3.1 doc at `GET /openapi.json`; hand-maintained
   with worker.js, kept honest by `test/openapi.test.mjs` (asserts every route

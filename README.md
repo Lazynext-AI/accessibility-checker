@@ -29,7 +29,7 @@ scanned by this tool, shown once ≥10 sites are in),
 `GET /checkout` (trial → paid),
 `POST /cancel` (self-service cancellation by purchase email),
 `POST /lead` (email capture), `GET /report/:id` (shareable report —
-`?level=A|AA|AAA|BP`, `?rule=<id>`, `?by=page` views; CSV/PDF exports honor them),
+`?level=A|AA|AAA|BP`, `?rule=<id>`, `?by=page` views; CSV/JSON/PDF exports honor them),
 `GET /badge/:id.svg` (embeddable score badge for a report),
 `GET /rules` (the coverage manifest — 74 WCAG criteria + 1 best-practice
 check; name, level, WCAG version, and detection path for every check emitted;

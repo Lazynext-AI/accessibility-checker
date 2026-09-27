@@ -96,7 +96,7 @@ export function reportHtml(id, rep, issues, ruleInfo, view, origin, trialDays = 
 ${rep.benchmark ? `<p style="color:#555;font-size:0.9em">Better than ${esc(String(rep.benchmark.pct))}% of ${esc(String(rep.benchmark.sites))} sites scanned by this tool.</p>` : ''}
 ${rep.section508 ? `<p style="color:#555">Section 508: ${rep.section508.conforms ? 'conforms' : `${rep.section508.criteria_failed.length} WCAG criteria failed — FPC ${esc(rep.section508.clauses_implicated.join(', '))}`}</p>` : ''}
 ${Array.isArray(rep.pages) && rep.pages.length ? `<table style="width:100%;border-collapse:collapse;margin:0.5rem 0">${rep.pages.map((p) => `<tr><td style="font-family:monospace;font-size:0.85em">${esc(p.url)}</td><td style="text-align:right"><b>${p.score}</b>/100</td></tr>`).join('')}</table>` : ''}
-<p><a href="${viewHref(id, view, '.csv')}">Download CSV</a> · <a href="${viewHref(id, view, '.pdf')}">Download PDF</a> · <img src="/badge/${esc(id)}.svg" alt="accessibility score badge" style="vertical-align:middle"></p>
+<p><a href="${viewHref(id, view, '.csv')}">Download CSV</a> · <a href="${viewHref(id, view, '.json')}">Download JSON</a> · <a href="${viewHref(id, view, '.pdf')}">Download PDF</a> · <img src="/badge/${esc(id)}.svg" alt="accessibility score badge" style="vertical-align:middle"></p>
 <p style="font-size:0.85em;color:#555">Embed this badge: <code style="user-select:all">${esc(`<a href="${origin}/report/${id}"><img src="${origin}/badge/${id}.svg" alt="Accessibility score"></a>`)}</code></p>
 ${viewNav(id, rep, ruleInfo, view, issues.length)}
 ${issueTables(rep, issues, ruleInfo, id, view)}

@@ -99,7 +99,7 @@ export const OPENAPI = {
     '/report/{id}': {
       get: {
         summary: 'Shareable report (HTML)',
-        description: 'Reports persist for 30 days. Append `.csv` or `.pdf` to the id for export formats. Query params filter the view identically across formats: `level` (A|AA|AAA|BP), `rule` (e.g. `wcag-1.4.3`), `by=page` (group site-scan findings by page).',
+        description: 'Reports persist for 30 days. Append `.csv`, `.json`, or `.pdf` to the id for export formats (`.json` returns the stored report object with the filtered `issues` list — the machine-readable export for SDK/CI consumers). Query params filter the view identically across formats: `level` (A|AA|AAA|BP), `rule` (e.g. `wcag-1.4.3`), `by=page` (group site-scan findings by page).',
         parameters: [
           { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           { name: 'level', in: 'query', schema: { type: 'string', enum: ['A', 'AA', 'AAA', 'BP'] } },
@@ -112,6 +112,7 @@ export const OPENAPI = {
             content: {
               'text/html': { schema: { type: 'string' } },
               'text/csv': { schema: { type: 'string' } },
+              'application/json': { schema: { type: 'object' } },
               'application/pdf': { schema: { type: 'string', format: 'binary' } },
             },
           },

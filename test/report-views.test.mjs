@@ -1,5 +1,5 @@
 // Report-view customization tests — ?level=, ?rule=, ?by=page on /report/:id
-// plus filter parity across the CSV and PDF export legs.
+// plus filter parity across the CSV, JSON, and PDF export legs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker.js';
@@ -98,6 +98,20 @@ test('CSV export honors the same filters', async () => {
   const csv = await (await get('/report/v.csv?level=A', {}, env)).text();
   assert.ok(csv.includes('wcag-1.1.1'));
   assert.ok(!csv.includes('wcag-1.3.5'), 'filtered row absent from CSV');
+});
+
+test('JSON export returns the stored report with filtered issues', async () => {
+  const env = mockEnv({ 'report:v': JSON.stringify(rep) });
+  const r = await get('/report/v.json?level=A', {}, env);
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get('content-type'), /application\/json/);
+  const body = await r.json();
+  assert.equal(body.score, 70, 'report metadata preserved');
+  assert.equal(body.issues.length, 1, 'filter applied to issues array');
+  assert.equal(body.issues[0].rule, 'wcag-1.1.1');
+  // Unfiltered .json returns the full stored issue list.
+  const full = await (await get('/report/v.json', {}, env)).json();
+  assert.equal(full.issues.length, 2);
 });
 
 test('PDF export forwards the view params to the render URL', async () => {

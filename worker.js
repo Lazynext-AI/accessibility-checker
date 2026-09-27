@@ -248,11 +248,12 @@ export default {
     }
 
     // Shareable report — scans persist here for 30 days.
-    // Suffixes: /report/:id.csv → CSV export, /report/:id.pdf → PDF via platform /pdf.
+    // Suffixes: .csv/.json exports, .pdf via platform /pdf; .json returns the
+    // stored report object so SDK/CI consumers get the raw findings.
     if (get && url.pathname.startsWith('/report/')) {
       const seg = url.pathname.slice(8);
-      const fmt = seg.endsWith('.csv') ? 'csv' : seg.endsWith('.pdf') ? 'pdf' : 'html';
-      const id = fmt === 'html' ? seg : seg.slice(0, -4);
+      const fmt = seg.endsWith('.csv') ? 'csv' : seg.endsWith('.pdf') ? 'pdf' : seg.endsWith('.json') ? 'json' : 'html';
+      const id = fmt === 'html' ? seg : fmt === 'json' ? seg.slice(0, -5) : seg.slice(0, -4);
       const raw = await kvGet(env, `report:${id}`);
       if (!raw) return respond({ error: 'report not found or expired' }, 404);
       const rep = JSON.parse(raw);
@@ -261,11 +262,14 @@ export default {
       // tells a customer what to prioritise; a bare rule id does not.
       const ruleInfo = Object.fromEntries(RULES.map((r) => [r.rule, r]));
       // View customization (?level=, ?rule=, ?by=page) lives in report_views.js;
-      // all three formats honor it so an export matches the on-screen view.
+      // every export format honors it so an export matches the on-screen view.
       const view = reportView(url.searchParams);
       const issues = filterIssues(rep, ruleInfo, view);
       if (fmt === 'csv') {
         return new Response(reportCsv(issues, ruleInfo), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="accessibility-report-${id}.csv"`, 'cache-control': 'public, max-age=3600' } });
+      }
+      if (fmt === 'json') {
+        return Response.json({ ...rep, issues }, { headers: { 'content-disposition': `attachment; filename="accessibility-report-${id}.json"`, 'cache-control': 'public, max-age=3600' } });
       }
       if (fmt === 'pdf') {
         const r = await platform(env, '/pdf', { method: 'POST', body: JSON.stringify({ url: `${url.origin}/report/${id}${url.search}` }) });
