@@ -88,7 +88,7 @@ function issueTables(rep, issues, ruleInfo, id, view) {
   return [...groups].map(([page, gi]) => `<h3 style="font-size:0.95em;margin:1.2em 0 0.2em;font-family:monospace;font-weight:normal">${esc(page)} <span style="color:#555">(${gi.length})</span></h3>${table(gi.map((i) => issueRow(i, ruleInfo, id, view)).join(''))}`).join('');
 }
 
-export function reportHtml(id, rep, issues, ruleInfo, view, origin) {
+export function reportHtml(id, rep, issues, ruleInfo, view, origin, trialDays = 0) {
   return `<!doctype html><meta charset="utf-8"><title>Accessibility report — ${esc(rep.url ?? 'paste')}</title>
 <body style="font-family:system-ui;max-width:800px;margin:2rem auto;padding:0 1rem">
 <h1>Accessibility report</h1><p><b>${esc(rep.url ?? 'pasted HTML')}</b> · ${new Date(rep.ts).toUTCString()} · rendered: ${rep.rendered}</p>
@@ -100,5 +100,8 @@ ${Array.isArray(rep.pages) && rep.pages.length ? `<table style="width:100%;borde
 <p style="font-size:0.85em;color:#555">Embed this badge: <code style="user-select:all">${esc(`<a href="${origin}/report/${id}"><img src="${origin}/badge/${id}.svg" alt="Accessibility score"></a>`)}</code></p>
 ${viewNav(id, rep, ruleInfo, view, issues.length)}
 ${issueTables(rep, issues, ruleInfo, id, view)}
+${trialDays
+  ? `<p style="padding:0.8em 1em;border:1px solid #2d6;background:#f2fff6;border-radius:6px"><b>You ran a real scan — extend your free Pro trial to ${esc(String(trialDays))} days.</b> Unlimited scans and site monitoring while you fix these findings. <a href="/checkout?trial=extended">Claim the extended trial →</a></p>`
+  : `<p style="padding:0.8em 1em;border:1px solid #ccc;border-radius:6px"><b>Go Pro</b> — unlimited scans and site monitoring while you fix these findings. <a href="/checkout">Start a 14-day free trial →</a></p>`}
 <p><a href="/">Run your own scan →</a></p>`;
 }

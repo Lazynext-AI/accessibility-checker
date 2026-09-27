@@ -87,3 +87,7 @@ generated from the live manifest — regenerate, don't hand-edit.
   an ops procedure (KYC → live `DODO_API_KEY` + `DODO_API_BASE` → recreate
   product + webhook + `WELCOME20`), documented in the monorepo AGENTS.md —
   not a code change.
+- Trial-extension mechanism shipped: `/checkout?trial=extended` reads
+  `config:trial_offer` (platform KV, bare day count) → `trial_days` clamped
+  15–90 (unset/invalid → 14). `/report/:id` renders the matching CTA —
+  offer ON vs OFF flips one `kv/put`, which is a business decision.

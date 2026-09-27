@@ -258,15 +258,27 @@ export default {
         if (!r.ok) return respond({ error: 'pdf export unavailable' }, 502);
         return new Response(r.body, { headers: { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="accessibility-report-${id}.pdf"`, 'cache-control': 'public, max-age=3600' } });
       }
-      return new Response(reportHtml(id, rep, issues, ruleInfo, view, url.origin),
+      // A completed scan lands here — the report is where a trial-extension
+      // offer belongs. config:trial_offer (days) enables the extended CTA;
+      // unset → the standard 14-day CTA.
+      const offer = parseInt((await kvGet(env, 'config:trial_offer')) ?? '', 10);
+      const trialDays = offer > 14 ? Math.min(offer, 90) : 0;
+      return new Response(reportHtml(id, rep, issues, ruleInfo, view, url.origin, trialDays),
         { headers: { 'content-type': 'text/html', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'", 'cache-control': 'public, max-age=3600' } });
     }
 
     // Redirect to a real Dodo checkout for the Pro plan via the platform.
+    // Extended-trial offer: config:trial_offer (platform KV) holds the offered
+    // day count; ?trial=extended applies it, capped at 90. Unset/invalid → 14.
     if (get && url.pathname === '/checkout') {
+      let trialDays = 14;
+      if (url.searchParams.get('trial') === 'extended') {
+        const offer = parseInt((await kvGet(env, 'config:trial_offer')) ?? '', 10);
+        if (offer > 14) trialDays = Math.min(offer, 90);
+      }
       const r = await platform(env, '/api/v1/billing/checkout', {
         method: 'POST',
-        body: JSON.stringify({ product_id: 'pdt_0NoEqD9VCMUZnIogq4Epy', plan: 'pro', trial_days: 14 }),
+        body: JSON.stringify({ product_id: 'pdt_0NoEqD9VCMUZnIogq4Epy', plan: 'pro', trial_days: trialDays }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.checkout_url) return respond({ error: 'checkout unavailable', detail: d }, 502);
