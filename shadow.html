@@ -11,22 +11,30 @@
 <shadow-card></shadow-card>
 </main>
 <script>
-    // Imperative open shadow roots — the scanner's rendered path must serialize
-    // them into <template shadowrootmode> markers or markup rules stay blind.
-    // Nested host exercises post-order expansion; the shadow button is the
-    // page's only focusable, so the census must pierce roots to count it.
+    // Imperative open shadow roots — the scanner must serialize them into
+    // <template shadowrootmode> markers or markup rules stay blind. Built via
+    // createElement so the script source carries no markup the static rules
+    // could double-count. Nested host exercises post-order expansion; the
+    // shadow button is the only focusable, so the census must pierce roots.
     class ShadowInner extends HTMLElement {
         connectedCallback() {
-            this.attachShadow({ mode: "open" }).innerHTML =
-                '<img src="icon-192.png" width="48" height="48">';
+            const img = document.createElement("img");
+            img.src = "icon-192.png";
+            img.width = 48; img.height = 48;
+            this.attachShadow({ mode: "open" }).append(img);
         }
     }
     class ShadowCard extends HTMLElement {
         connectedCallback() {
-            this.attachShadow({ mode: "open" }).innerHTML =
-                '<img src="icon-192.png" width="48" height="48">' +
-                "<shadow-inner></shadow-inner>" +
-                '<button id="innerBtn" style="padding:14px 22px;font-size:1rem">Shadow button</button>';
+            const img = document.createElement("img");
+            img.src = "icon-192.png";
+            img.width = 48; img.height = 48;
+            const inner = document.createElement("shadow-inner");
+            const btn = document.createElement("button");
+            btn.id = "innerBtn";
+            btn.textContent = "Shadow button";
+            btn.style.cssText = "padding:14px 22px;font-size:1rem";
+            this.attachShadow({ mode: "open" }).append(img, inner, btn);
         }
     }
     customElements.define("shadow-inner", ShadowInner);
