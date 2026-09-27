@@ -342,6 +342,7 @@ export const OPENAPI = {
         type: 'object',
         properties: {
           score: { type: 'number', minimum: 0, maximum: 100 },
+          score_model: { type: 'string', enum: ['weighted-v1'], description: 'Scoring model version — weighted-v1 sums findings weighted by WCAG level and detection confidence (warn-class heuristics count half), repeat instances of the same rule at half marginal weight. Level-A confirmed failures still weigh 1.0.' },
           issues: { type: 'array', items: { $ref: '#/components/schemas/Issue' } },
           rendered: { type: 'boolean', description: 'true when the headless-browser path ran (false = static fallback)' },
           plan: { type: 'string', enum: ['free', 'pro'] },

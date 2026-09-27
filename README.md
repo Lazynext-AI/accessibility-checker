@@ -12,10 +12,15 @@ as tickets.
 curl -X POST https://accessibility-checker.dry-hall-6a50.workers.dev/scan \
   -H 'content-type: application/json' \
   -d '{"url": "https://yoursite.com", "license": "you@example.com", "email_report": true}'
-# → {"score": 70, "issues": [{"rule": "wcag-1.3.1", ...}], "rendered": true,
-#    "benchmark": {"pct": 61, "sites": 128},
+# → {"score": 70, "score_model": "weighted-v1", "issues": [{"rule": "wcag-1.3.1", ...}],
+#    "rendered": true, "benchmark": {"pct": 61, "sites": 128},
 #    "report": ".../report/<id>"}
 ```
+
+The score is severity-weighted: confirmed WCAG level-A failures count in
+full, AA/AAA findings progressively less, warn-class heuristics at half, and
+repeat occurrences of the same rule at half marginal cost — a page full of
+minor nits outscores one with a few blocking failures.
 
 Endpoints: `POST /scan` (html or url; `{"url": ..., "site": true}` crawls
 same-origin pages — 3 free / 10 Pro — and returns per-page scores; real-site

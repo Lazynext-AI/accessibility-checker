@@ -5,6 +5,8 @@
  * Worker and the Python engine share one rule set.
  */
 
+import { RULES } from "./rules/manifest.js";
+
 export function scanHtml(html) {
   const issues = [];
   // Element rules run with <script> bodies stripped — JS strings routinely
@@ -70,11 +72,32 @@ export function scanHtml(html) {
   return issues;
 }
 
+// Score weights derive from the rules manifest so a new rule is weighted
+// automatically when it's added — conformance level sets the base (Level-A
+// failures block whole user groups; AAA findings are refinements), warn-class
+// heuristics count half (they're "verify" signals, not confirmed failures),
+// and best-practice findings aren't WCAG failures at all. A confirmed A-level
+// issue weighs exactly 1.0, anchoring the previous flat model.
+const LEVEL_WEIGHT = { A: 1.0, AA: 0.6, AAA: 0.35, BP: 0.25 };
+const RULE_WEIGHT = new Map(
+  RULES.map((r) => [
+    r.rule,
+    (LEVEL_WEIGHT[r.level] ?? 1.0) * (/warn-class/i.test(r.detects ?? "") ? 0.5 : 1),
+  ])
+);
+
 export function score(issues) {
-  // Exponential decay: keeps resolution across the whole range so a site with
-  // 30 findings still differentiates from one with 10 (and score-drop alerts
-  // stay meaningful). 0 issues = 100; 5 ≈ 72; 10 ≈ 51; 15 ≈ 37; 30 ≈ 14.
-  return Math.max(0, Math.round(100 * Math.exp(-issues.length / 15)));
+  // Severity-weighted exponential decay. Each finding costs its rule weight;
+  // repeat occurrences of the same rule add half marginal weight (one
+  // systematic defect isn't N independent failures). Every weight is ≤ 1.0,
+  // so scores only move up vs the flat model — monitor drop-alerts can't
+  // false-fire on the model change. 0 issues = 100; ten distinct confirmed
+  // A-level issues still ≈ 51.
+  const counts = new Map();
+  for (const i of issues ?? []) counts.set(i?.rule, (counts.get(i?.rule) ?? 0) + 1);
+  let w = 0;
+  for (const [rule, c] of counts) w += (RULE_WEIGHT.get(rule) ?? 1.0) * (1 + (c - 1) * 0.5);
+  return Math.max(0, Math.round(100 * Math.exp(-w / 15)));
 }
 
 // --- rendered-DOM contrast checks (WCAG 1.4.3) -------------------------------

@@ -82,6 +82,13 @@ tags' attributes survive the strip (`src=` stays matchable).
 
 - `worker.js` — routes + KV/platform helpers (`kvGet`, `kvPut`, `rlHit`,
   `isPro`, `platform`, `unsubSig`)
+- `src/scanner.js` — markup scanner + `score()` (**protected file**). Scoring
+  is severity-weighted (`score_model: 'weighted-v1'` on results): weights
+  derive from `rules/manifest.js` — A=1.0, AA=0.6, AAA=0.35, BP=0.25,
+  warn-class detects ×0.5, unknown rules=1.0 — with repeat occurrences of a
+  rule at half marginal cost. All weights ≤1.0 so scores only rise vs the old
+  flat count; `mon:*` drop-alerts can't false-fire on the model change, and
+  stored reports keep their scan-time score honestly.
 - `src/scan_pipeline.js` — shared quota + scan + persist core for
   `/scan`, `/mcp`, `/a2a`
 - `src/agent_surfaces.js` — MCP server, A2A `message/send`/`tasks/get`,
