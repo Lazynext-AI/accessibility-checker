@@ -75,6 +75,12 @@ description column; `\bcaptcha\b` matched "CAPTCHA" in text and
 `href="/blog/captcha"` links). Require tag/attribute position
 (`<[a-zA-Z][^>]*\sautofocus\b`, attribute-scoped `class|id|src|data-*` for
 generic terms) — distinctive vendor tokens may stay free-form.
+`wcag-3.1.2` compares the **effective** language (innermost `lang`/`xml:lang`
+ancestor, tracked via open-tag stack) against the text's script family —
+a correctly `lang`-marked ancestor satisfies the criterion even when the
+leaf element itself is unmarked (live FP: example.com's rendered
+`<p lang="ar">` blocks; each `lang` value must *match* the script — a
+`lang="fr"` wrapper around Arabic still fails).
 
 **Shadow DOM**: the rendered path serializes open shadow roots into
 `<template shadowrootmode>` nodes inside `page.html` (platform `scrape.ts`),
