@@ -1,4 +1,11 @@
 # Introduction to Continuous Integration and Continuous Deployment (CI/CD)
+
+> **Status note (2026-09-28):** historical research/proposal. Shipped
+> workflows are `lint`, `test`, `self-scan` (see `.github/workflows/`) and
+> the stack is plain ESM JS run via `node --test` — ESLint, Prettier,
+> TypeScript and Jest below were never adopted. Do not treat the tool list
+> or the "Current CI/CD Setup" section as the spec.
+
 The Accessibility Checker project aims to provide an AI-powered tool for scanning small business websites for accessibility compliance issues. To ensure the quality and reliability of the project, implementing Continuous Integration and Continuous Deployment (CI/CD) pipelines is crucial. This document outlines the approach and tools used to automate code quality checks, ensuring that the deployed site (index.html) becomes a working client-side version of the product.
 
 ## Current CI/CD Setup

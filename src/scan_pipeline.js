@@ -25,7 +25,6 @@ const benchHost = (u) => {
   if (!h || h === 'localhost' || h.includes(':') ||
       h === 'lazynext.com' || h.endsWith('.lazynext.com') ||
       h === 'lazynext-ai.github.io' ||
-      h === 'lazynext-platform.github.io' ||
       h === 'example.com' || h.endsWith('.example.com') ||
       h === 'example.org' || h === 'example.net' ||
       /\.(test|invalid|local|internal|lan|example)$/.test(h) ||

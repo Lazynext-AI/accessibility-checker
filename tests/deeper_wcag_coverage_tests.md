@@ -1,6 +1,14 @@
 Deeper WCAG Coverage Tests
 ==========================
 
+> **Status note (2026-09-28):** all seven scenarios below are implemented as
+> live rules — rendered-layer contrast census, `wcag-1.1.1` alt text,
+> `wcag-2.4.4`/`wcag-2.4.6` link purpose, `wcag-1.3.1` headings/labels/table
+> structure, `wcag-1.2.2` captions. The `AccessibilityChecker.scan` API in
+> the example is illustrative, not the real interface — scans run through
+> the worker `/scan` route and `src/rules/`. Kept as the original test plan;
+> `docs/wcag-coverage.md` is the authoritative coverage map.
+
 ## Introduction
 
 The Accessibility Checker aims to provide a comprehensive scanning tool for small business websites to ensure compliance with accessibility regulations. To achieve this, we need to ensure that our tool covers a wide range of Web Content Accessibility Guidelines (WCAG) criteria. This document outlines the deeper WCAG coverage tests that will be implemented to guarantee the tool's effectiveness.
