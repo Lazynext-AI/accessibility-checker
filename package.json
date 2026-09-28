@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "gen:coverage": "node scripts/gen-coverage.mjs",
     "deploy": "node scripts/deploy.mjs",
     "preview": "wrangler dev"
   },

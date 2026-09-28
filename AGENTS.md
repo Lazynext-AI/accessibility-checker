@@ -62,7 +62,9 @@ must never be labeled `wcag-3.2.7` or claim a conformance level). Do not claim c
 honestly detect: media semantics, session/timing behavior, NLP-level
 judgment, and form-submission dynamics are out of scope for the current
 static + rendered + cross-page architecture. `docs/wcag-coverage.md` is
-generated from the live manifest — regenerate, don't hand-edit.
+generated from the live manifest via `npm run gen:coverage`
+(`scripts/gen-coverage.mjs`) — regenerate, don't hand-edit;
+`test/wcag-coverage-doc.test.mjs` fails when the committed file drifts.
 Element detectors must match **markup context**, not bare words: prose can
 contain the trigger word (`\bautofocus\b` fired on the `/rules` catalog's own
 description column; `\bcaptcha\b` matched "CAPTCHA" in text and
