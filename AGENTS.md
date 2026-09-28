@@ -76,11 +76,16 @@ description column; `\bcaptcha\b` matched "CAPTCHA" in text and
 (`<[a-zA-Z][^>]*\sautofocus\b`, attribute-scoped `class|id|src|data-*` for
 generic terms) — distinctive vendor tokens may stay free-form.
 `wcag-3.1.2` compares the **effective** language (innermost `lang`/`xml:lang`
-ancestor, tracked via open-tag stack) against the text's script family —
-a correctly `lang`-marked ancestor satisfies the criterion even when the
-leaf element itself is unmarked (live FP: example.com's rendered
-`<p lang="ar">` blocks; each `lang` value must *match* the script — a
-`lang="fr"` wrapper around Arabic still fails).
+ancestor, tracked via open-tag stack) against the text's script family,
+and only fires when the mismatch is *provable*: a Latin-script mark around
+non-Latin text, a known different-script mark, a conflicting BCP-47 script
+subtag (`zh-Cyrl` fails, `zh-Hant` passes), or no lang anywhere. Unknown
+language codes stay silent — `lang="nan"`/`"koi"`/`"kk"` on wikipedia.org
+are all correctly marked; codes match with `(?=-|$)` boundaries so `koi`
+isn't `ko`; multi-script languages (kk=Cyrl+Latn+Arab, sd, ks, ber…) sit
+in every family they can honestly write. Live FPs that shaped this:
+example.com's rendered `<p lang="ar">` blocks, wikipedia.org's ~300
+correctly-marked `<option lang=X>` names.
 
 **Shadow DOM**: the rendered path serializes open shadow roots into
 `<template shadowrootmode>` nodes inside `page.html` (platform `scrape.ts`),
