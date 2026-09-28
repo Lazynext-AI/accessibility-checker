@@ -98,41 +98,55 @@ export function scanAdditionalHtml(html) {
   // exactly that live. Walk the open-tag stack instead: the innermost lang
   // (own attr or inherited) must agree with the text's script family.
   // Symbols and emoji aren't language parts, so only letter-script runs
-  // count. A run under NO lang anywhere is unmarked — still a violation.
+  // count. Flag only when the mismatch is PROVABLE: no lang anywhere
+  // (unmarked), a Latin-script mark around non-Latin text, a known
+  // different-script mark, or an explicit BCP-47 script subtag that
+  // disagrees. A language the tables don't know stays silent — `lang="nan"`
+  // (Min Nan, Han-script) must not flag on Chinese text, and a script-tag
+  // registry can't enumerate every language code honestly.
   const LANG_PART_FAMS = [
-    { name: "Arabic", re: /[؀-ۿݐ-ݿࢠ-ࣿ]/, langs: /^(ar|fa|ur|ps|sd|ug|ks|ckb|prs|bal|lrc|mzn|glk|aeb|shu|zdj)/i },
-    { name: "Hebrew", re: /[֐-׿יִ-אָ]/, langs: /^(he|iw|yi|lad|jpr|jrb)/i },
-    { name: "Han", re: /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\u{20000}-\u{2A6DF}]/u, langs: /^(zh|ja|ko|vi|lzh|och)/i },
-    { name: "kana", re: /[぀-ヿㇰ-ㇿｦ-ﾝ]/, langs: /^ja/i },
-    { name: "Hangul", re: /[가-힯ᄀ-ᇿ]/, langs: /^ko/i },
-    { name: "Bopomofo", re: /[ㄅ-ㄭㆠ-ㆺ]/, langs: /^(zh|hak|cjy)/i },
-    { name: "Cyrillic", re: /[Ѐ-ӿԀ-ԯ]/, langs: /^(be|bg|kk|ky|mk|mn|ru|sr|tg|tt|uk|uz|cv|os|ba|ce|ab|sah|udm|mhr|myv|xal|ady|kbd)/i },
-    { name: "Devanagari", re: /[ऀ-ॿ꣠-ꣿ]/, langs: /^(hi|mr|ne|sa|kok|doi|mai|bho|awa|mag|new|raj|sat|brx|hne|hoj|kru|lif|noe|pnb|rwr|swv|gom|ks)/i },
-    { name: "Bengali", re: /[ঀ-৿]/, langs: /^(bn|as|mni|sat|rkt|bpy|ctg)/i },
-    { name: "Gurmukhi", re: /[਀-੿]/, langs: /^(pa|pnb|skr)/i },
-    { name: "Gujarati", re: /[ઁ-૿]/, langs: /^(gu|kej|kfr|muh|rab|vaj)/i },
-    { name: "Oriya", re: /[଀-୿]/, langs: /^(or|kxv)/i },
-    { name: "Tamil", re: /[஀-௿]/, langs: /^(ta|bfq|irh|ptq|taq|uay)/i },
-    { name: "Telugu", re: /[ఀ-౿]/, langs: /^(te|gon|lrm|wbq|yan)/i },
-    { name: "Kannada", re: /[ಀ-೿]/, langs: /^(kn|kgj|kfa|kfd|sdm|tcy|ull)/i },
-    { name: "Malayalam", re: /[ഀ-ൿ]/, langs: /^(ml|ajp|mjs|mnr|sgc)/i },
-    { name: "Sinhala", re: /[඀-෿]/, langs: /^(si|pi)/i },
-    { name: "Thai", re: /[฀-๿]/, langs: /^(th|tts|sou|kdt|lwl|mfp)/i },
-    { name: "Lao", re: /[ກ-໿]/, langs: /^(lo|blt|hnj|kjg|phu|sdt|tts)/i },
-    { name: "Tibetan", re: /[ༀ-࿿]/, langs: /^(bo|dz|adx|kgy|lhp|loy|sgd)/i },
-    { name: "Myanmar", re: /[က-႟]/, langs: /^(my|blk|kar|ksw|mnw|shn|rki|pwo|kht|csh|zom)/i },
-    { name: "Georgian", re: /[Ⴀ-ჿ]/, langs: /^(ka|lzz|sva|xmf|ive|oss)/i },
-    { name: "Armenian", re: /[԰-և]/, langs: /^(hy|xcl|hyw|axm)/i },
-    { name: "Greek", re: /[Ͱ-Ͽἀ-῿]/, langs: /^(el|grc|cpg|pnt|tsd|yej|jge)/i },
-    { name: "Ethiopic", re: /[ሀ-፿ⶀ-ⷿ꬀-ꬿ]/, langs: /^(am|ti|gez|har|om|wal|byn|xan|sgw|tir|tig|bhr|dae|gmz|njm|sto)/i },
-    { name: "Cherokee", re: /[Ꭰ-᏿ꭰ-ꭿ]/, langs: /^chr/i },
-    { name: "Mongolian", re: /[ᠠ-ᢲ]/, langs: /^(mn|mvf|oih)/i },
-    { name: "Tifinagh", re: /[ⴰ-⵿]/, langs: /^(ber|shi|tzm|zgh|rif|tmh|ttq|thv|thz|mzb|taq|siz|zen|jbe)/i },
-    { name: "N'Ko", re: /[߀-߿]/, langs: /^(nqo|emk|bam|dyu|man|mlq|msc|jud)/i },
-    { name: "Syriac", re: /[܀-ݿ]/, langs: /^(syc|aii|arc|tru|cld|amw|mid|syn|bhn|bji|hrt|kqd|myz|sam|tmr)/i },
-    { name: "Vai", re: /[ꕉ-ꖿ]/, langs: /^vai/i },
-    { name: "Lisu", re: /[ꓐ-꓿]/, langs: /^(lis|atb|hpo|tpo|ytl|ztp)/i },
+    { name: "Arabic", re: /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/, langs: /^(ar|fa|ur|ps|sd|ug|ks|ckb|prs|bal|lrc|mzn|glk|aeb|shu|zdj|pnb|khw|trw|wne|haz|bqi|mvy|phl|rmt|sdh|sus)/i },
+    { name: "Hebrew", re: /[\u0590-\u05FF\uFB1D-\uFB4F]/, langs: /^(he|iw|yi|lad|jpr|jrb)/i },
+    { name: "Han", re: /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\u{20000}-\u{2A6DF}]/u, langs: /^(zh|ja|ko|vi|lzh|och|cmn|wuu|yue|gan|hak|hsn|nan|cdo|zhx|ngu|cjy|mxz|sjc|xnb)/i },
+    { name: "kana", re: /[\u3040-\u30FF\u31F0-\u31FF\uFF66-\uFF9D]/, langs: /^(ja|ain)/i },
+    { name: "Hangul", re: /[\uAC00-\uD7AF\u1100-\u11FF]/, langs: /^ko/i },
+    { name: "Bopomofo", re: /[\u3105-\u312D\u31A0-\u31BF]/, langs: /^(zh|hak|cjy)/i },
+    { name: "Cyrillic", re: /[\u0400-\u04FF\u0500-\u052F]/, langs: /^(be|bg|kk|ky|mk|mn|ru|sr|tg|tt|uk|uz|cv|os|ba|ce|ab|sah|udm|mhr|myv|xal|ady|kbd)/i },
+    { name: "Devanagari", re: /[\u0900-\u097F\uA8E0-\uA8FF]/, langs: /^(hi|mr|ne|sa|kok|doi|mai|bho|awa|mag|new|raj|sat|brx|hne|hoj|kru|lif|noe|rwr|swv|gom|ks|dty)/i },
+    { name: "Bengali", re: /[\u0980-\u09FF]/, langs: /^(bn|as|mni|sat|rkt|bpy|ctg)/i },
+    { name: "Gurmukhi", re: /[\u0A00-\u0A7F]/, langs: /^(pa|skr)/i },
+    { name: "Gujarati", re: /[\u0A80-\u0AFF]/, langs: /^(gu|kej|kfr|muh|rab|vaj)/i },
+    { name: "Oriya", re: /[\u0B00-\u0B7F]/, langs: /^(or|kxv|sat)/i },
+    { name: "Tamil", re: /[\u0B80-\u0BFF]/, langs: /^(ta|bfq|irh|ptq|taq|uay)/i },
+    { name: "Telugu", re: /[\u0C00-\u0C7F]/, langs: /^(te|gon|lrm|wbq|yan)/i },
+    { name: "Kannada", re: /[\u0C80-\u0CFF]/, langs: /^(kn|kgj|kfa|kfd|sdm|tcy|ull)/i },
+    { name: "Malayalam", re: /[\u0D00-\u0D7F]/, langs: /^(ml|ajp|mjs|mnr|sgc)/i },
+    { name: "Sinhala", re: /[\u0D80-\u0DFF]/, langs: /^(si|pi)/i },
+    { name: "Thai", re: /[\u0E00-\u0E7F]/, langs: /^(th|tts|sou|kdt|lwl|mfp)/i },
+    { name: "Lao", re: /[\u0E80-\u0EFF]/, langs: /^(lo|blt|hnj|kjg|phu|sdt|tts)/i },
+    { name: "Tibetan", re: /[\u0F00-\u0FFF]/, langs: /^(bo|dz|adx|kgy|lhp|loy|sgd)/i },
+    { name: "Myanmar", re: /[\u1000-\u109F]/, langs: /^(my|blk|kar|ksw|mnw|shn|rki|pwo|kht|csh|zom|hlt)/i },
+    { name: "Georgian", re: /[\u10A0-\u10FF]/, langs: /^(ka|lzz|sva|xmf|ive|oss)/i },
+    { name: "Armenian", re: /[\u0530-\u058F]/, langs: /^(hy|xcl|hyw|axm)/i },
+    { name: "Greek", re: /[\u0370-\u03FF\u1F00-\u1FFF]/, langs: /^(el|grc|cpg|pnt|tsd|yej|jge|rme|gmy)/i },
+    { name: "Ethiopic", re: /[\u1200-\u137F\u2D80-\u2DDF\uAB00-\uAB2F]/, langs: /^(am|ti|gez|har|om|wal|byn|xan|sgw|tir|tig|bhr|dae|gmz|njm|sto)/i },
+    { name: "Cherokee", re: /[\u13A0-\u13FF\uAB70-\uABBF]/, langs: /^chr/i },
+    { name: "Mongolian", re: /[\u1820-\u18AF]/, langs: /^(mn|mvf|oih)/i },
+    { name: "Tifinagh", re: /[\u2D30-\u2D7F]/, langs: /^(ber|shi|tzm|zgh|rif|tmh|ttq|thv|thz|mzb|taq|siz|zen|jbe)/i },
+    { name: "N'Ko", re: /[\u07C0-\u07FF]/, langs: /^(nqo|emk|bam|dyu|man|mlq|msc|jud)/i },
+    { name: "Syriac", re: /[\u0700-\u074F]/, langs: /^(syc|aii|arc|tru|cld|amw|mid|syn|bhn|bji|hrt|kqd|myz|sam|tmr)/i },
+    { name: "Vai", re: /[\uA500-\uA63F]/, langs: /^vai/i },
+    { name: "Lisu", re: /[\uA4D0-\uA4FF]/, langs: /^(lis|atb|hpo|tpo|ytl|ztp)/i },
+    { name: "Ol Chiki", re: /[\u1C50-\u1C7F]/, langs: /^sat/i },
+    { name: "Meetei", re: /[\uAAE0-\uAAFF]/, langs: /^(mni|omp)/i },
   ];
+  // Languages written in Latin script — a mark like lang="fr" around Arabic
+  // text is a provable mismatch. Not in LANG_PART_FAMS (which detects text
+  // scripts); only consulted on the effective-lang side.
+  const LATIN_LANGS = /^(en|fr|de|es|pt|it|nl|sv|da|nb|nn|fi|is|et|lv|lt|pl|cs|sk|sl|hr|hu|ro|sq|bs|ca|gl|eu|ga|cy|mt|tr|az|uz|kk|tk|vi|id|ms|tl|fil|jv|su|sw|ha|yo|ig|zu|xh|st|tn|sn|ny|lg|rw|rn|ee|fo|kl|se|co|br|kw|lb|rm|sc|oc|ln|kg|lu|tw|ff|wo|bm|ss|nr|ve|ts|nd|to|fj|ty|mi|haw|tvl|eo|ia|ie|sco|gd|af|fy|li|vls|wa|gsw|ksh|swg|hrx|pdt|so|om|ku|qu|ay|gn|ht|pap|srn|tpi|bi|sm|niu|mh|ch|na|gil|pon|yap|ceb|hil|war|pam|bcl|pag|nv|cr|ike|iku|oji|mus|chy)/i;
+  // BCP-47 script subtags (lang="nan-Hant") — when present they're the
+  // authoritative claim about the marked script.
+  const SCRIPT_SUBTAGS = { arab: "Arabic", aran: "Arabic", hebr: "Hebrew", hans: "Han", hant: "Han", hani: "Han", jpan: "Han", kore: "Han", hang: "Hangul", jamo: "Hangul", hira: "kana", kana: "kana", bopo: "Bopomofo", cyrl: "Cyrillic", deva: "Devanagari", beng: "Bengali", guru: "Gurmukhi", gujr: "Gujarati", orya: "Oriya", taml: "Tamil", telu: "Telugu", knda: "Kannada", mlym: "Malayalam", sinh: "Sinhala", thai: "Thai", laoo: "Lao", tibt: "Tibetan", mymr: "Myanmar", geor: "Georgian", armn: "Armenian", grek: "Greek", ethi: "Ethiopic", cher: "Cherokee", mong: "Mongolian", tfng: "Tifinagh", nkoo: "N'Ko", syrc: "Syriac", vaii: "Vai", lisu: "Lisu", olck: "Ol Chiki", mtei: "Meetei", latn: "Latin" };
   const VOID_TAGS = new Set("area base br col embed hr img input link meta param source track wbr".split(" "));
   const RAWTEXT_TAGS = new Set(["script", "style", "textarea"]);
   const stack = []; // {tag, raw, eff} — eff = effective lang (own attr or inherited)
@@ -155,8 +169,17 @@ export function scanAdditionalHtml(html) {
     const text = m[4].trim();
     if (text.length < 8) continue;
     const eff = stack.length ? stack[stack.length - 1].eff : "";
-    const bad = LANG_PART_FAMS.filter((f) => f.re.test(text)).find((f) => !f.langs.test(eff));
-    if (!bad) continue;
+    const fams = LANG_PART_FAMS.filter((f) => f.re.test(text));
+    if (!fams.length) continue;
+    // An explicit script subtag overrides the primary tag's default script —
+    // "zh-Cyrl" claims Cyrillic, so Han text inside genuinely fails; without
+    // one, "zh" implies Han but "nan" stays unknown → can't prove, skip.
+    const sub = eff.match(/^[a-z]{2,3}-([a-zA-Z]{4})/)?.[1]?.toLowerCase();
+    const effSet = sub && SCRIPT_SUBTAGS[sub]
+      ? new Set([SCRIPT_SUBTAGS[sub]])
+      : new Set(LANG_PART_FAMS.filter((f) => f.langs.test(eff)).map((f) => f.name).concat(LATIN_LANGS.test(eff) ? ["Latin"] : []));
+    const bad = fams.find((f) => !effSet.has(f.name));
+    if (!bad || (eff && !effSet.size)) continue; // unknown lang — can't prove
     issues.push({
       rule: "wcag-3.1.2",
       message: `<${stack.length ? stack[stack.length - 1].tag : "body"}> contains ${bad.name}-script text without a matching lang attribute (effective lang: ${eff || "none"}): "${text.slice(0, 40)}"`,

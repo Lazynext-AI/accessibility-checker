@@ -53,6 +53,19 @@ test("lang inherits through ancestors (3.1.2)", () => {
   // Symbols/emoji aren't language parts.
   const emoji = scanAdditionalHtml('<p>🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉</p>');
   assert.ok(!rules(emoji).includes("wcag-3.1.2"));
+  // A language outside the script tables can't prove a mismatch — lang="nan"
+  // (Min Nan, Han-script) on Chinese text stays silent (wikipedia.org case).
+  const nan = scanAdditionalHtml('<option lang="nan">閩南語 / Bân-lâm-gú 以及其他語言</option>');
+  assert.ok(!rules(nan).includes("wcag-3.1.2"));
+  // BCP-47 script subtag is authoritative: zh-Hant around Han text passes.
+  const hant = scanAdditionalHtml('<p lang="zh-Hant">這是正確標示的繁體中文內容</p>');
+  assert.ok(!rules(hant).includes("wcag-3.1.2"));
+  // …but a wrong script subtag is provably wrong.
+  const wrongSub = scanAdditionalHtml('<p lang="zh-Cyrl">這是標示錯誤的中文內容</p>');
+  assert.ok(rules(wrongSub).includes("wcag-3.1.2"));
+  // Latin-script mark around non-Latin text is a provable mismatch.
+  const latin = scanAdditionalHtml('<div lang="fr"><p>这是中文内容没有语言标记的文本</p></div>');
+  assert.ok(rules(latin).includes("wcag-3.1.2"));
 });
 
 test("status-like region without role/aria-live flagged (4.1.3)", () => {
