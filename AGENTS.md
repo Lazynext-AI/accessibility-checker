@@ -51,6 +51,10 @@ check and silently gets the 60s floor.
   false-positive fixture.
 - KV reads can serve a ~60s edge-cached value — a persistence check at
   +60–70s can false-positive. Verify durability at ≥120s.
+- The report page CSP is `default-src 'none'` — every needed source must
+  be named (`img-src 'self'` was added `b69383f` after the same-origin
+  badge SVG rendered broken). Report pages are edge-cached 1h — verify
+  CSP/HTML changes with a `?cb=N` query param, not a plain reload.
 
 ## Coverage honesty
 
