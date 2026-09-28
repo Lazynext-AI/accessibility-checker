@@ -282,7 +282,7 @@ export default {
       const offer = parseInt((await kvGet(env, 'config:trial_offer')) ?? '', 10);
       const trialDays = offer > 14 ? Math.min(offer, 90) : 0;
       return new Response(reportHtml(id, rep, issues, ruleInfo, view, url.origin, trialDays),
-        { headers: { 'content-type': 'text/html', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'", 'cache-control': 'public, max-age=3600' } });
+        { headers: { 'content-type': 'text/html', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'", 'cache-control': 'public, max-age=3600' } });
     }
 
     // Redirect to a real Dodo checkout for the Pro plan via the platform.
