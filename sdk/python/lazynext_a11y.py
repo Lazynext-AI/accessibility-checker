@@ -124,3 +124,61 @@ class AccessibilityChecker:
 
     def agent_card(self):
         return self._req("GET", "/.well-known/agent.json")
+
+
+def _main(argv):
+    """CLI: python lazynext_a11y.py <scan|site|report|rules|badge|card> [arg]
+
+    Every command prints JSON on stdout; scan/report print the compact
+    summary and the shareable URLs. Exit 2 on CheckerError.
+    """
+    import sys
+
+    usage = "usage: lazynext_a11y <scan URL|site URL|report ID|csv ID|rules|badge ID|card> [--license KEY] [--base URL]"
+    args = [a for a in argv[1:] if not a.startswith("--")]
+    license_key = ""
+    base = DEFAULT_BASE
+    i = 1
+    while i < len(argv):
+        if argv[i] == "--license" and i + 1 < len(argv):
+            license_key = argv[i + 1]; i += 2
+        elif argv[i] == "--base" and i + 1 < len(argv):
+            base = argv[i + 1]; i += 2
+        else:
+            i += 1
+    if not args:
+        print(usage, file=sys.stderr)
+        return 64
+    c = AccessibilityChecker(base_url=base, license=license_key)
+    cmd, rest = args[0], args[1:]
+    try:
+        if cmd == "scan" and rest:
+            r = c.scan(url=rest[0])
+            rid = r.get("id")
+            print(json.dumps({**r, "report": c.report_url(rid), "badge": c.badge_url(rid)}, indent=1) if rid else json.dumps(r, indent=1))
+        elif cmd == "site" and rest:
+            print(json.dumps(c.site(rest[0]), indent=1))
+        elif cmd == "report" and rest:
+            print(json.dumps(c.report(rest[0]), indent=1))
+        elif cmd == "csv" and rest:
+            print(c.report_csv(rest[0]))
+        elif cmd == "rules":
+            r = c.rules()
+            print(json.dumps(r, indent=1))
+        elif cmd == "badge" and rest:
+            print(c.badge_url(rest[0]))
+        elif cmd == "card":
+            print(json.dumps(c.agent_card(), indent=1))
+        else:
+            print(usage, file=sys.stderr)
+            return 64
+    except CheckerError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(_main(sys.argv))
