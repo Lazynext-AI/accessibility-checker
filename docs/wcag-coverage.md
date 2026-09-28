@@ -51,7 +51,7 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-2.5.4 — Motion Actuation | A | 2.1 | deviceorientation/devicemotion handlers driving functionality with no equivalent control |
 | wcag-2.5.7 — Dragging Movements | AA | 2.2 | draggable elements / drag-event handlers with no single-pointer alternative |
 | wcag-3.1.1 — Language of Page | A | 2.0 | <html> missing lang |
-| wcag-3.1.2 — Language of Parts | AA | 2.0 | content in a different language than the page without a lang attribute |
+| wcag-3.1.2 — Language of Parts | AA | 2.0 | non-Latin text runs whose effective language (nearest lang ancestor) doesn't match the script |
 | wcag-3.1.4 — Abbreviations | AAA | 2.0 | <abbr> without title/aria-label — no expanded-form mechanism |
 | wcag-3.1.5 — Reading Level | AAA | 2.0 | prose estimated beyond lower-secondary grade (Flesch–Kincaid >9 on ≥150 words) — needs a simplified alternative (warn-class) |
 | wcag-3.2.1 — On Focus | A | 2.0 | autofocus and onfocus handlers that navigate/submit/click |

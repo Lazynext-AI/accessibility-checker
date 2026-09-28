@@ -34,6 +34,27 @@ test("non-Latin text without lang flagged once (3.1.2)", () => {
   assert.ok(!rules(ok).includes("wcag-3.1.2"));
 });
 
+test("lang inherits through ancestors (3.1.2)", () => {
+  // The example.com false positive: localized paragraph marks the container,
+  // leaf spans don't re-mark — inherited lang satisfies the criterion.
+  const ok = scanAdditionalHtml('<html lang="en"><body><p lang="ar" dir="rtl"><span>هذا النطاق مُخصص للاستخدام</span><span> في أمثلة التوثيق</span></p></body></html>');
+  assert.ok(!rules(ok).includes("wcag-3.1.2"));
+  // A mark that names the WRONG language still fails — that's a real 3.1.2 bug.
+  const mislabelled = scanAdditionalHtml('<html lang="en"><body><p lang="fr"><span>هذا النطاق مخصص للاستخدام</span></p></body></html>');
+  assert.ok(rules(mislabelled).includes("wcag-3.1.2"));
+  // Unmarked Arabic inside an en-marked page inherits "en" — mismatch fires.
+  const unmarked = scanAdditionalHtml('<html lang="en"><body><p><span>هذا النطاق مخصص للاستخدام</span></p></body></html>');
+  assert.ok(rules(unmarked).includes("wcag-3.1.2"));
+  // xml:lang is a real marking; data-lang is not.
+  const xml = scanAdditionalHtml('<p xml:lang="ar">هذا النطاق مخصص للاستخدام</p>');
+  assert.ok(!rules(xml).includes("wcag-3.1.2"));
+  const fake = scanAdditionalHtml('<div data-lang="ar">هذا النطاق مخصص للاستخدام</div>');
+  assert.ok(rules(fake).includes("wcag-3.1.2"));
+  // Symbols/emoji aren't language parts.
+  const emoji = scanAdditionalHtml('<p>🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉</p>');
+  assert.ok(!rules(emoji).includes("wcag-3.1.2"));
+});
+
 test("status-like region without role/aria-live flagged (4.1.3)", () => {
   const bad = scanAdditionalHtml('<div class="toast-notification">Saved</div>');
   assert.ok(rules(bad).includes("wcag-4.1.3"));

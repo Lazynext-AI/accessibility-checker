@@ -62,7 +62,7 @@ export const RULES = [
   { rule: "wcag-2.5.8",  name: "Target Size (Minimum)",     level: "AA",  wcag: "2.2", how: "rendered",  detects: "interactive targets under 24×24 CSS px (exempting inline-text links and UA-default controls)" },
   // ── Understandable ─────────────────────────────────────────────────────
   { rule: "wcag-3.1.1",  name: "Language of Page",          level: "A",   wcag: "2.0", how: "static",    detects: "<html> missing lang" },
-  { rule: "wcag-3.1.2",  name: "Language of Parts",         level: "AA",  wcag: "2.0", how: "static",    detects: "content in a different language than the page without a lang attribute" },
+  { rule: "wcag-3.1.2",  name: "Language of Parts",         level: "AA",  wcag: "2.0", how: "static",    detects: "non-Latin text runs whose effective language (nearest lang ancestor) doesn't match the script" },
   { rule: "wcag-3.1.4",  name: "Abbreviations",             level: "AAA", wcag: "2.0", how: "static",    detects: "<abbr> without title/aria-label — no expanded-form mechanism" },
   { rule: "wcag-3.1.5",  name: "Reading Level",             level: "AAA", wcag: "2.0", how: "static",    detects: "prose estimated beyond lower-secondary grade (Flesch–Kincaid >9 on ≥150 words) — needs a simplified alternative (warn-class)" },
   { rule: "wcag-3.2.1",  name: "On Focus",                  level: "A",   wcag: "2.0", how: "static",    detects: "autofocus and onfocus handlers that navigate/submit/click" },

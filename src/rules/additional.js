@@ -91,17 +91,77 @@ export function scanAdditionalHtml(html) {
     issues.push({ rule: "wcag-1.3.2", message: "aria-flowto overrides the reading sequence — verify it preserves a meaningful order" });
   }
 
-  // WCAG 3.1.2 — runs of non-Latin script without a lang attribute.
-  const NONLATIN = /[一-鿿぀-ヿ가-힯Ѐ-ӿ֐-׿؀-ۿऀ-ॿ]/;
-  for (const m of src.matchAll(/<(\w+)\b([^>]*)>([^<>]{8,}?)<\/\1>/g)) {
-    if (/\blang\s*=/i.test(m[2])) continue;
-    if (NONLATIN.test(m[3])) {
-      issues.push({
-        rule: "wcag-3.1.2",
-        message: `<${m[1].toLowerCase()}> contains non-Latin text without a lang attribute: "${m[3].trim().slice(0, 40)}"`,
-      });
-      break;
+  // WCAG 3.1.2 — runs of non-Latin script whose *effective* language doesn't
+  // match the text. `lang` inherits through ancestors, so checking only the
+  // leaf element's own attribute false-positives on compliant pages —
+  // localized <p lang="ar"> blocks in example.com's rendered DOM tripped
+  // exactly that live. Walk the open-tag stack instead: the innermost lang
+  // (own attr or inherited) must agree with the text's script family.
+  // Symbols and emoji aren't language parts, so only letter-script runs
+  // count. A run under NO lang anywhere is unmarked — still a violation.
+  const LANG_PART_FAMS = [
+    { name: "Arabic", re: /[؀-ۿݐ-ݿࢠ-ࣿ]/, langs: /^(ar|fa|ur|ps|sd|ug|ks|ckb|prs|bal|lrc|mzn|glk|aeb|shu|zdj)/i },
+    { name: "Hebrew", re: /[֐-׿יִ-אָ]/, langs: /^(he|iw|yi|lad|jpr|jrb)/i },
+    { name: "Han", re: /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\u{20000}-\u{2A6DF}]/u, langs: /^(zh|ja|ko|vi|lzh|och)/i },
+    { name: "kana", re: /[぀-ヿㇰ-ㇿｦ-ﾝ]/, langs: /^ja/i },
+    { name: "Hangul", re: /[가-힯ᄀ-ᇿ]/, langs: /^ko/i },
+    { name: "Bopomofo", re: /[ㄅ-ㄭㆠ-ㆺ]/, langs: /^(zh|hak|cjy)/i },
+    { name: "Cyrillic", re: /[Ѐ-ӿԀ-ԯ]/, langs: /^(be|bg|kk|ky|mk|mn|ru|sr|tg|tt|uk|uz|cv|os|ba|ce|ab|sah|udm|mhr|myv|xal|ady|kbd)/i },
+    { name: "Devanagari", re: /[ऀ-ॿ꣠-ꣿ]/, langs: /^(hi|mr|ne|sa|kok|doi|mai|bho|awa|mag|new|raj|sat|brx|hne|hoj|kru|lif|noe|pnb|rwr|swv|gom|ks)/i },
+    { name: "Bengali", re: /[ঀ-৿]/, langs: /^(bn|as|mni|sat|rkt|bpy|ctg)/i },
+    { name: "Gurmukhi", re: /[਀-੿]/, langs: /^(pa|pnb|skr)/i },
+    { name: "Gujarati", re: /[ઁ-૿]/, langs: /^(gu|kej|kfr|muh|rab|vaj)/i },
+    { name: "Oriya", re: /[଀-୿]/, langs: /^(or|kxv)/i },
+    { name: "Tamil", re: /[஀-௿]/, langs: /^(ta|bfq|irh|ptq|taq|uay)/i },
+    { name: "Telugu", re: /[ఀ-౿]/, langs: /^(te|gon|lrm|wbq|yan)/i },
+    { name: "Kannada", re: /[ಀ-೿]/, langs: /^(kn|kgj|kfa|kfd|sdm|tcy|ull)/i },
+    { name: "Malayalam", re: /[ഀ-ൿ]/, langs: /^(ml|ajp|mjs|mnr|sgc)/i },
+    { name: "Sinhala", re: /[඀-෿]/, langs: /^(si|pi)/i },
+    { name: "Thai", re: /[฀-๿]/, langs: /^(th|tts|sou|kdt|lwl|mfp)/i },
+    { name: "Lao", re: /[ກ-໿]/, langs: /^(lo|blt|hnj|kjg|phu|sdt|tts)/i },
+    { name: "Tibetan", re: /[ༀ-࿿]/, langs: /^(bo|dz|adx|kgy|lhp|loy|sgd)/i },
+    { name: "Myanmar", re: /[က-႟]/, langs: /^(my|blk|kar|ksw|mnw|shn|rki|pwo|kht|csh|zom)/i },
+    { name: "Georgian", re: /[Ⴀ-ჿ]/, langs: /^(ka|lzz|sva|xmf|ive|oss)/i },
+    { name: "Armenian", re: /[԰-և]/, langs: /^(hy|xcl|hyw|axm)/i },
+    { name: "Greek", re: /[Ͱ-Ͽἀ-῿]/, langs: /^(el|grc|cpg|pnt|tsd|yej|jge)/i },
+    { name: "Ethiopic", re: /[ሀ-፿ⶀ-ⷿ꬀-ꬿ]/, langs: /^(am|ti|gez|har|om|wal|byn|xan|sgw|tir|tig|bhr|dae|gmz|njm|sto)/i },
+    { name: "Cherokee", re: /[Ꭰ-᏿ꭰ-ꭿ]/, langs: /^chr/i },
+    { name: "Mongolian", re: /[ᠠ-ᢲ]/, langs: /^(mn|mvf|oih)/i },
+    { name: "Tifinagh", re: /[ⴰ-⵿]/, langs: /^(ber|shi|tzm|zgh|rif|tmh|ttq|thv|thz|mzb|taq|siz|zen|jbe)/i },
+    { name: "N'Ko", re: /[߀-߿]/, langs: /^(nqo|emk|bam|dyu|man|mlq|msc|jud)/i },
+    { name: "Syriac", re: /[܀-ݿ]/, langs: /^(syc|aii|arc|tru|cld|amw|mid|syn|bhn|bji|hrt|kqd|myz|sam|tmr)/i },
+    { name: "Vai", re: /[ꕉ-ꖿ]/, langs: /^vai/i },
+    { name: "Lisu", re: /[ꓐ-꓿]/, langs: /^(lis|atb|hpo|tpo|ytl|ztp)/i },
+  ];
+  const VOID_TAGS = new Set("area base br col embed hr img input link meta param source track wbr".split(" "));
+  const RAWTEXT_TAGS = new Set(["script", "style", "textarea"]);
+  const stack = []; // {tag, raw, eff} — eff = effective lang (own attr or inherited)
+  for (const m of src.matchAll(/<!--[\s\S]*?-->|<\/(\w+)\s*>|<(\w+)((?:[^>"']|"[^"]*"|'[^']*')*)>|([^<]+)/g)) {
+    if (m[1]) {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].tag === m[1].toLowerCase()) { stack.length = i; break; }
+      }
+      continue;
     }
+    if (m[2]) {
+      const tag = m[2].toLowerCase();
+      const attrs = m[3] || "";
+      if (VOID_TAGS.has(tag) || attrs.trimEnd().endsWith("/")) continue;
+      const lm = attrs.match(/(?:^|\s)(?:xml:)?lang\s*=\s*["']?([\w-]+)/i);
+      stack.push({ tag, raw: RAWTEXT_TAGS.has(tag), eff: lm ? lm[1].toLowerCase() : stack.length ? stack[stack.length - 1].eff : "" });
+      continue;
+    }
+    if (!m[4] || stack.some((s) => s.raw)) continue;
+    const text = m[4].trim();
+    if (text.length < 8) continue;
+    const eff = stack.length ? stack[stack.length - 1].eff : "";
+    const bad = LANG_PART_FAMS.filter((f) => f.re.test(text)).find((f) => !f.langs.test(eff));
+    if (!bad) continue;
+    issues.push({
+      rule: "wcag-3.1.2",
+      message: `<${stack.length ? stack[stack.length - 1].tag : "body"}> contains ${bad.name}-script text without a matching lang attribute (effective lang: ${eff || "none"}): "${text.slice(0, 40)}"`,
+    });
+    break;
   }
 
   // WCAG 4.1.3 — status/toast regions that assistive tech can't announce.
