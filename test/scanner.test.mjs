@@ -38,6 +38,32 @@ test('focus: empty and single-element traces are 2.1.1', () => {
   assert.equal(checkFocus(['a#x', 'a#x', 'a#x', 'a#x', 'a#x', 'a#x', 'a#x', 'a#x', 'a#x', 'a#x'])[0].rule, 'wcag-2.1.1');
 });
 
+test('focus: sparse-page silence — single/zero focusables with no pointer-only evidence is conformant', () => {
+  // census knows exactly one focusable and no cursor:pointer regions →
+  // nothing else asks for interaction; the lone link IS keyboard-operable.
+  assert.deepEqual(checkFocus(['a#x'], 1, 0), []);
+  assert.deepEqual(checkFocus(['body', 'body', 'body', 'body'], 0, 0), []);
+});
+
+test('focus: pointer-only census is 2.1.1 evidence', () => {
+  // cursor:pointer regions outside every focusable — framework-bound
+  // controls (no onclick attr for the markup statics) still get caught.
+  assert.equal(checkFocus(['a#x'], 1, 3)[0].rule, 'wcag-2.1.1');
+  assert.match(checkFocus(['a#x'], 1, 3, ['div#cta:Buy'])[0].message, /cursor:pointer/);
+  assert.equal(checkFocus(['body', 'body', 'body', 'body'], 0, 4)[0].rule, 'wcag-2.1.1');
+});
+
+test('focus: census of many focusables reached only once is 2.1.1', () => {
+  assert.equal(checkFocus(['a#x', 'a#x', 'a#x', 'a#x'], 5, 0)[0].rule, 'wcag-2.1.1');
+  assert.match(checkFocus(['a#x', 'a#x', 'a#x', 'a#x'], 5, 0)[0].message, /1 of 5/);
+});
+
+test('focus: unknown census keeps the conservative warn', () => {
+  // Older render builds send no focusable/pointerOnly — warn stays.
+  assert.equal(checkFocus(['a#x'], 1)[0].rule, 'wcag-2.1.1');
+  assert.equal(checkFocus(['body', 'body'], 0)[0].rule, 'wcag-2.1.1');
+});
+
 test('focus: a stuck run among multiple elements is 2.1.2', () => {
   const trace = ['a#x', 'button:y', 'div[role=dialog]', 'div[role=dialog]', 'div[role=dialog]', 'div[role=dialog]', 'div[role=dialog]', 'a#x', 'button:y', 'input:z'];
   assert.equal(checkFocus(trace)[0].rule, 'wcag-2.1.2');

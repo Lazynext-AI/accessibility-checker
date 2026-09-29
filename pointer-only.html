@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Pointer-only controls fixture</title></head>
+<body>
+  <main>
+    <h1>Pointer-only controls fixture</h1>
+    <a href="#x">the one real link</a>
+    <!-- Framework-bound click targets leave no markup for the static rules:
+         no onclick attribute, no role, no tabindex — only the author's
+         cursor:pointer styling says "interactive". The render census counts
+         each topmost pointer region (nested pointer children = one region).
+         Exactly one focusable (the link) keeps the trace at unique.size==1. -->
+    <div style="cursor:pointer" id="card">
+      <span style="cursor:pointer">nested pointer child</span>
+      <p>card body</p>
+    </div>
+    <div style="cursor:pointer" class="tile">second region</div>
+    <div style="cursor:default">not interactive — should not count</div>
+    <p style="cursor:pointer">third region (pointer text)</p>
+    <label style="cursor:pointer">label is exempt — its click forwards to a control</label>
+  </main>
+</body>
+</html>

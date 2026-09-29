@@ -160,19 +160,45 @@ export function checkFacts(facts) {
 
 // --- keyboard trace checks (WCAG 2.1.1, 2.1.2, 2.4.3) ------------------------
 
-export function checkFocus(trace) {
+// focusable: render census of visible focusable elements (what Tab *should*
+//            reach) — undefined on older render builds.
+// pointerOnly: render census of cursor:pointer elements outside every
+//            focusable control — concrete evidence of mouse-only regions
+//            (framework-bound handlers leave no markup for the statics).
+//            Undefined on older render builds → conservative warns stay.
+// pointerOnlyDesc: up to 3 descriptors of those regions, for the message.
+export function checkFocus(trace, focusable, pointerOnly, pointerOnlyDesc = []) {
   const issues = [];
   if (!Array.isArray(trace) || trace.length === 0) {
     issues.push({ rule: "wcag-2.1.1", message: "no keyboard focus trace captured" });
     return issues;
   }
   const unique = new Set(trace.filter((t) => t && t !== "body"));
+  const ptr = Number.isInteger(pointerOnly) ? pointerOnly : null;
+  const ptrMsg = () =>
+    `${ptr} element(s) styled cursor:pointer are not keyboard-focusable — mouse-only controls${pointerOnlyDesc.length ? ` (${pointerOnlyDesc.slice(0, 3).join(", ")})` : ""}`;
   if (unique.size === 0) {
-    issues.push({ rule: "wcag-2.1.1", message: "no focusable elements found — page is keyboard-inaccessible" });
+    if (Number.isInteger(focusable) && focusable === 0 && ptr === 0) {
+      // Nothing interactive at all — a keyboard has nothing to operate.
+    } else if (ptr !== null && ptr > 0) {
+      issues.push({ rule: "wcag-2.1.1", message: `no keyboard-focusable elements, and ${ptrMsg()}` });
+    } else {
+      issues.push({ rule: "wcag-2.1.1", message: "no focusable elements found — page is keyboard-inaccessible" });
+    }
     return issues;
   }
   if (unique.size === 1) {
-    issues.push({ rule: "wcag-2.1.1", message: "only one focusable element — Tab cannot move through page content" });
+    const censusSingle = Number.isInteger(focusable) && focusable <= 1;
+    if (censusSingle && ptr === 0) {
+      // Honestly sparse page — the one control is keyboard-reachable and
+      // nothing else asks for interaction (WCAG 2.1.1 is satisfied).
+    } else if (censusSingle && ptr !== null && ptr > 0) {
+      issues.push({ rule: "wcag-2.1.1", message: `only one keyboard-focusable element, and ${ptrMsg()}` });
+    } else if (Number.isInteger(focusable) && focusable > 1) {
+      issues.push({ rule: "wcag-2.1.1", message: `Tab reached only 1 of ${focusable} focusable elements — the rest are unreachable by keyboard` });
+    } else {
+      issues.push({ rule: "wcag-2.1.1", message: "only one focusable element — Tab cannot move through page content" });
+    }
     return issues;
   }
   // A real trap: focus gets stuck on one element mid-trace while other

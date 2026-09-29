@@ -77,7 +77,7 @@ Browser Rendering trace (contrast census, focus cycle, target measurements),
 | wcag-1.4.6 — Contrast (Enhanced) | AAA | 2.0 | text below 7:1 contrast ratio — reported separately from AA failures |
 | wcag-1.4.11 — Non-text Contrast | AA | 2.1 | control boundaries/states below 3:1 against adjacent colors |
 | wcag-1.4.12 — Text Spacing | AA | 2.1 | content clipped when WCAG text-spacing metrics are applied |
-| wcag-2.1.1 — Keyboard | A | 2.0 | no focusable elements, unreachable focusables, tabindex=-1 on natively focusable elements, scrollable regions not keyboard-reachable |
+| wcag-2.1.1 — Keyboard | A | 2.0 | no focusable elements, unreachable focusables, tabindex=-1 on natively focusable elements, scrollable regions not keyboard-reachable, cursor:pointer regions outside every focusable control |
 | wcag-2.1.2 — No Keyboard Trap | A | 2.0 | Tab-swallowing keydown handlers, undismissable dialogs, focus stall/cycle in a real adaptive-depth Tab trace (up to 64 presses), Escape ignored inside dialogs, Shift+Tab backward stalls/cycles, click-opened dialogs with no keyboard exit |
 | wcag-2.4.1 — Bypass Blocks | A | 2.0 | no skip-navigation link to main content |
 | wcag-2.4.3 — Focus Order | A | 2.0 | positive tabindex, focusables Tab never reaches, focus entering regions it can't exit, dialogs that open without receiving focus |

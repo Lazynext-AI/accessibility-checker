@@ -64,6 +64,16 @@ check and silently gets the 60s floor.
   baseline trap:** rescans pin `mon:*.viewport` (`worker/src/index.ts` sweep
   defaults missing → `desktop`), so pre-mobile monitors keep comparing
   like-for-like and no false drop-alerts fire on the model change.
+- **`checkFocus` census-gating (2026-09-29):** the `unique.size ≤ 1` 2.1.1
+  warns are evidence-gated by the render census. `pointerOnly` counts
+  topmost `cursor:pointer` regions outside every focusable control — the
+  surviving signal for framework-bound click targets (`addEventListener`,
+  React `onClick`) that leave no markup for the statics. Sparse pages
+  (focusable ≤1, `pointerOnly` 0) stay silent — example.com is conformant
+  on 2.1.1, not trapped. Old render builds send no census → the
+  conservative warn stays (backward compat). `pointer-only.html` is the
+  live verification fixture (one link + 3 pointer regions, no onclick —
+  proves the census fires where `additional.js` can't).
 
 ## Coverage honesty
 
