@@ -28,11 +28,30 @@ const body = { url };
 if (site) body.site = true;
 if (license) body.license = license;
 
-const res = await fetch(api, {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify(body),
-});
+const ATTEMPTS = 3;
+const TIMEOUT_MS = 120_000;
+let res = null;
+for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+  try {
+    res = await fetch(api, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok && res.status >= 500 && attempt < ATTEMPTS) {
+      console.error(`scan attempt ${attempt}/${ATTEMPTS} got HTTP ${res.status}; retrying`);
+      await new Promise((r) => setTimeout(r, Math.min(2000 * attempt, 5000)));
+      continue;
+    }
+    break;
+  } catch (err) {
+    if (attempt === ATTEMPTS) throw err;
+    const ms = Math.min(2000 * attempt, 5000);
+    console.error(`scan attempt ${attempt}/${ATTEMPTS} failed (${err.name}); retrying in ${ms}ms`);
+    await new Promise((r) => setTimeout(r, ms));
+  }
+}
 const data = await res.json().catch(() => null);
 if (!res.ok || !data) {
   console.error(`scan failed: HTTP ${res.status} ${JSON.stringify(data)}`);
