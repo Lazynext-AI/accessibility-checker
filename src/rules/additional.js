@@ -1297,21 +1297,23 @@ export function checkUseOfColor(styles) {
 export function scanKeyboardStatics(html) {
   const issues = [];
   if (typeof html !== "string" || !html) return issues;
+  const srcRaw = html; // script bodies kept — JS-source trap checks need them
   // Same <script>-body stripping as scanAdditionalHtml — element and
   // attribute patterns shouldn't match markup-shaped JS strings.
   html = html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, "<script$1></script>");
 
-  // Inline key handlers that preventDefault() a Tab key event — the literal
-  // mechanism of a keyboard trap.
+  // Inline key handlers that swallow a Tab key event — the literal trap
+  // mechanism. In an inline handler `return false` and `event.returnValue =
+  // false` preventDefault exactly like preventDefault() — all three count.
   for (const h of html.matchAll(/\bonkey(?:down|press|up)\s*=\s*(["'])([\s\S]*?)\1/gi)) {
     const body = h[2];
     const swallowsTab =
-      /preventDefault\s*\(/.test(body) &&
+      /preventDefault\s*\(|returnValue\s*=\s*false|\breturn\s+false\b/i.test(body) &&
       /keyCode\s*[=!]=+\s*9\b|\.which\s*[=!]=+\s*9\b|key\s*===?\s*['"]Tab['"]|code\s*===?\s*['"]Tab['"]/i.test(body);
     if (swallowsTab) {
       issues.push({
         rule: "wcag-2.1.2",
-        message: "key handler calls preventDefault() on Tab — keyboard focus can become trapped",
+        message: "key handler swallows Tab key events — keyboard focus can become trapped",
       });
       break;
     }
@@ -1343,6 +1345,51 @@ export function scanKeyboardStatics(html) {
     issues.push({
       rule: "wcag-2.4.3",
       message: `tabindex="${posTab[1]}" overrides natural focus order — use document order instead`,
+    });
+  }
+
+  // --- JS-source trap mechanisms (script bodies live in srcRaw) -----------
+  // The three patterns below are the trap mechanisms the markup-only checks
+  // can't see — same deliberate narrowness: flag only what can't FP on
+  // ordinary code.
+
+  // addEventListener key handler that preventDefaults Tab — the same trap
+  // as the inline attribute, invisible to markup scans. Both tokens inside
+  // the handler window IS the mechanism regardless of nesting. `return
+  // false` is deliberately absent: listeners ignore return values — only
+  // preventDefault()/returnValue=false actually swallow the key.
+  for (const m of srcRaw.matchAll(/addEventListener\s*\(\s*["']key(?:down|press|up)["']/gi)) {
+    const body = srcRaw.slice(m.index, m.index + 600);
+    if (/preventDefault\s*\(|returnValue\s*=\s*false/i.test(body) &&
+        /keyCode\s*[=!]=+\s*9\b|\.which\s*[=!]=+\s*9\b|key\s*===?\s*["']Tab["']|code\s*===?\s*["']Tab["']/i.test(body)) {
+      issues.push({
+        rule: "wcag-2.1.2",
+        message: "addEventListener key handler preventDefaults Tab — keyboard focus can become trapped",
+      });
+      break;
+    }
+  }
+
+  // Focus-stealing: a focus/focusin handler that calls .focus() can ping-pong
+  // focus between elements forever — the classic trap mechanism. Legit focus
+  // management (roving tabindex, composite widgets) redirects on keydown or
+  // mousedown, not on focus itself, so the hedge stays honest.
+  if (/\bonfocus(?:in)?\s*=\s*(["'])[\s\S]*?\.focus\s*\([\s\S]*?\1/i.test(srcRaw) ||
+      /addEventListener\s*\(\s*["']focus(?:in)?["'][\s\S]{0,400}?\.focus\s*\(/i.test(srcRaw)) {
+    issues.push({
+      rule: "wcag-2.1.2",
+      message: "focus handler redirects focus with .focus() — possible focus-stealing trap (verify an exit path exists)",
+    });
+  }
+
+  // Unconditional `return false` on a key attribute swallows every keystroke
+  // including Tab — a stronger trap signal than a Tab-filtered preventDefault.
+  // The attribute body must be nothing but the return: conditional returns
+  // are a filter, not a trap.
+  if (/\bonkey(?:down|press|up)\s*=\s*(["'])\s*return\s+false\s*;?\s*\1/i.test(html)) {
+    issues.push({
+      rule: "wcag-2.1.2",
+      message: "key handler unconditionally returns false — swallows every keystroke including Tab",
     });
   }
 

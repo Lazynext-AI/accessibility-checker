@@ -134,6 +134,64 @@ test("tabindex 0 and -1 are fine", () => {
   assert.equal(rules(out).includes("wcag-2.4.3"), false);
 });
 
+// --- JS-source trap mechanisms ---------------------------------------------
+
+test("addEventListener keydown preventDefault on Tab flagged", () => {
+  const out = scanKeyboardStatics(
+    `<script>document.addEventListener('keydown', (e) => { if (e.key === 'Tab') e.preventDefault(); });</script>`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("addEventListener keydown with keyCode 9 + returnValue flagged", () => {
+  const out = scanKeyboardStatics(
+    `<script>window.addEventListener("keydown", function(e){ if(e.keyCode==9){ e.returnValue=false; } });</script>`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("addEventListener keydown on non-Tab keys is clean", () => {
+  const out = scanKeyboardStatics(
+    `<script>el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });</script>`);
+  assert.equal(rules(out).includes("wcag-2.1.2"), false);
+});
+
+test("return false inside addEventListener is NOT a trap — listeners ignore it", () => {
+  const out = scanKeyboardStatics(
+    `<script>el.addEventListener('keydown', (e) => { if (e.key === 'Tab') return false; });</script>`);
+  assert.equal(rules(out).includes("wcag-2.1.2"), false);
+});
+
+test("onfocus attribute calling .focus() flags focus-stealing", () => {
+  const out = scanKeyboardStatics(`<input onfocus="document.getElementById('x').focus()">`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("addEventListener focus handler calling .focus() flags", () => {
+  const out = scanKeyboardStatics(
+    `<script>modal.addEventListener('focusin', () => firstBtn.focus());</script>`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("keydown handler calling .focus() is clean — legit focus management", () => {
+  const out = scanKeyboardStatics(
+    `<script>menu.addEventListener('keydown', (e) => { if (e.key === 'Home') items[0].focus(); });</script>`);
+  assert.equal(rules(out).includes("wcag-2.1.2"), false);
+});
+
+test("unconditional onkeydown return false flags", () => {
+  const out = scanKeyboardStatics(`<div onkeydown="return false">x</div>`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("conditional return false on Tab still swallows Tab — flagged", () => {
+  const out = scanKeyboardStatics(`<div onkeydown="if(event.key==='Tab') return false; doThing()">x</div>`);
+  assert.ok(rules(out).includes("wcag-2.1.2"));
+});
+
+test("return false conditional on Enter only is a filter — clean", () => {
+  const out = scanKeyboardStatics(`<div onkeydown="if(event.key==='Enter') return false; doThing()">x</div>`);
+  assert.equal(rules(out).includes("wcag-2.1.2"), false);
+});
+
 // --- timing/media/input-purpose statics ------------------------------------
 
 test("meta http-equiv=refresh flags wcag-2.2.1 + AAA wcag-2.2.4", () => {
