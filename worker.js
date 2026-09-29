@@ -17,7 +17,7 @@ const CORS = {
 
 // Shared platform-KV helpers handed to runScan + the agent surfaces, so
 // /scan, /mcp and /a2a enforce the same quota and persist the same reports.
-const KV_OPS = { kvGet, kvPut, rlHit, isPro, platform };
+const KV_OPS = { kvGet, kvPut, rlHit, isPro, planLevel, platform };
 
 // Escape user- and scanned-page-controlled text before it lands in report HTML
 // or email bodies — report URLs are shareable, so raw interpolation is stored XSS.
@@ -62,10 +62,19 @@ async function kvDel(env, key) {
   if (!r.ok) throw new Error(`kv delete failed: ${r.status}`);
 }
 
-async function isPro(env, license) {
-  if (!license) return false;
+// Plan tiers: license:<email> stores the Dodo plan name. Levels gate
+// entitlement depth (crawl pages, monitor cap, white-label reports).
+const PLAN_LEVEL = { free: 0, pro: 1, agency: 2 };
+const MONITOR_CAP = { 1: 5, 2: 50 };
+
+async function planLevel(env, license) {
+  if (!license) return 0;
   const v = await kvGet(env, `license:${String(license).toLowerCase()}`);
-  return v === 'pro';
+  return PLAN_LEVEL[v] ?? (v ? 1 : 0); // unknown paid plan names → pro-level
+}
+
+async function isPro(env, license) {
+  return (await planLevel(env, license)) > 0;
 }
 
 // Per-key daily counters via platform KV. Returns true when the counter is at
@@ -285,18 +294,27 @@ export default {
         { headers: { 'content-type': 'text/html', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'", 'cache-control': 'public, max-age=3600' } });
     }
 
-    // Redirect to a real Dodo checkout for the Pro plan via the platform.
-    // Extended-trial offer: config:trial_offer (platform KV) holds the offered
-    // day count; ?trial=extended applies it, capped at 90. Unset/invalid → 14.
+    // Redirect to a real Dodo checkout via the platform. ?plan=pro|agency and
+    // ?term=monthly|annual pick the tier's product (test-mode ids — recreate
+    // live on flip). Extended-trial: config:trial_offer (platform KV) holds
+    // the offered days; ?trial=extended applies it, capped at 90. Unset → 14.
+    const CHECKOUT_PRODUCTS = {
+      'pro:monthly': 'pdt_0NoEqD9VCMUZnIogq4Epy',
+      'pro:annual': 'pdt_0Nofjy268m9bli5OaIXRs',
+      'agency:monthly': 'pdt_0NofjSIpNGrV51Bi5nym7',
+      'agency:annual': 'pdt_0Nofjy47Y9PR6pdx3KF3U',
+    };
     if (get && url.pathname === '/checkout') {
       let trialDays = 14;
       if (url.searchParams.get('trial') === 'extended') {
         const offer = parseInt((await kvGet(env, 'config:trial_offer')) ?? '', 10);
         if (offer > 14) trialDays = Math.min(offer, 90);
       }
+      const plan = url.searchParams.get('plan') === 'agency' ? 'agency' : 'pro';
+      const term = url.searchParams.get('term') === 'annual' ? 'annual' : 'monthly';
       const r = await platform(env, '/api/v1/billing/checkout', {
         method: 'POST',
-        body: JSON.stringify({ product_id: 'pdt_0NoEqD9VCMUZnIogq4Epy', plan: 'pro', trial_days: trialDays }),
+        body: JSON.stringify({ product_id: CHECKOUT_PRODUCTS[`${plan}:${term}`], plan, trial_days: trialDays }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.checkout_url) return respond({ error: 'checkout unavailable', detail: d }, 502);
@@ -403,12 +421,15 @@ export default {
     // let strangers send them alerts or manage their list.
     if (url.pathname === '/monitor' && request.method === 'POST') {
       const b = await request.json().catch(() => ({}));
-      if (!(await isPro(env, b.license))) return respond({ error: 'pro license required', upgrade: '/checkout' }, 402);
+      const level = await planLevel(env, b.license);
+      if (!level) return respond({ error: 'pro license required', upgrade: '/checkout' }, 402);
       if (!isHttpUrl(b.url)) return respond({ error: 'provide {"url"}' }, 400);
-      // Every monitor is a daily rendered rescan forever — cap per license.
+      // Every monitor is a daily rendered rescan forever — cap scales with
+      // plan level (pro 5, agency 50).
       const ml = await platform(env, '/kv/list', { method: 'POST', body: JSON.stringify({ prefix: `mon:${String(b.license).toLowerCase()}:` }) });
       const mCount = ml.ok ? ((await ml.json().catch(() => ({}))).keys ?? []).length : 0;
-      if (mCount >= 50) return respond({ error: 'monitor limit reached (50) — remove one first' }, 429);
+      const mCap = MONITOR_CAP[level] ?? MONITOR_CAP[1];
+      if (mCount >= mCap) return respond({ error: `monitor limit reached (${mCap}) — remove one first` }, 429);
       const cDay = new Date().toISOString().slice(0, 10);
       const cIp = request.headers.get('cf-connecting-ip') ?? 'anon';
       if (await rlHit(env, `rl:confirm:${String(b.license).toLowerCase()}:${cDay}`, 10) ||

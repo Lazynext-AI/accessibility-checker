@@ -134,8 +134,8 @@ export const OPENAPI = {
     },
     '/checkout': {
       get: {
-        summary: 'Redirect to Pro checkout (Dodo Payments)',
-        description: '302 → hosted checkout. `?trial=extended` applies the configured extended-trial offer (clamped 15–90 days; unset/invalid → standard 14-day trial).',
+        summary: 'Redirect to paid checkout (Dodo Payments)',
+        description: '302 → hosted checkout. `?plan=pro|agency` picks the tier (default pro); `?term=monthly|annual` picks billing period (default monthly). `?trial=extended` applies the configured extended-trial offer (clamped 15–90 days; unset/invalid → standard 14-day trial).',
         parameters: [{ name: 'trial', in: 'query', schema: { type: 'string', enum: ['extended'] } }],
         responses: {
           '302': { description: 'Redirect to Dodo hosted checkout' },

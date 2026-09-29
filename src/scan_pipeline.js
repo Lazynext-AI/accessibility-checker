@@ -50,7 +50,9 @@ const cacheBust = (u) => {
 //         { ok: false, status, payload }  — map payload onto the HTTP/JSON-RPC
 // surface unchanged.
 export async function runScan(env, kv, { url, html, site, license, email_report, viewport, ip, origin }) {
-  const pro = await kv.isPro(env, license);
+  const level = await kv.planLevel(env, license); // 0 free / 1 pro / 2 agency
+  const pro = level > 0;
+  const planName = level >= 2 ? 'agency' : pro ? 'pro' : 'free';
   const day = new Date().toISOString().slice(0, 10);
   const rlKey = `rl:scan:${ip}:${day}`;
   if (!pro && url) {
@@ -86,8 +88,9 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
 
   if (isHttpUrl(url) && site === true) {
     // Site-wide scan: BFS same-origin pages, apply the HTML ruleset to
-    // each, aggregate with per-page attribution. Free: 3 pages, Pro: 10.
-    const maxPages = pro ? 10 : 3;
+    // each, aggregate with per-page attribution. Free: 3, Pro: 10,
+    // Agency: 25.
+    const maxPages = level >= 2 ? 25 : pro ? 10 : 3;
     try {
       const crawl = await crawlSite(url, { maxPages, delayMs: 150 });
       sitePages = crawl.pages.map((p) => {
@@ -134,7 +137,7 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
   }
 
   issues = withRecommendations(issues);
-  const result = { score: sitePages ? Math.round(sitePages.reduce((t, p) => t + p.score, 0) / sitePages.length) : score(issues), score_model: 'weighted-v1', issues, rendered, plan: pro ? 'pro' : 'free', section508: section508Report(issues), ...(renderedViewport ? { viewport: renderedViewport } : {}), ...(renderError ? { render_error: renderError } : {}), ...(sitePages ? { site: true, pages: sitePages.map(({ url, score: s, issues: i }) => ({ url, score: s, count: i.length })) } : {}) };
+  const result = { score: sitePages ? Math.round(sitePages.reduce((t, p) => t + p.score, 0) / sitePages.length) : score(issues), score_model: 'weighted-v1', issues, rendered, plan: planName, section508: section508Report(issues), ...(renderedViewport ? { viewport: renderedViewport } : {}), ...(renderError ? { render_error: renderError } : {}), ...(sitePages ? { site: true, pages: sitePages.map(({ url, score: s, issues: i }) => ({ url, score: s, count: i.length })) } : {}) };
 
   // Score benchmark — every real-site scan feeds a scan_stats row on the
   // platform, and the result reports where this score lands against that
