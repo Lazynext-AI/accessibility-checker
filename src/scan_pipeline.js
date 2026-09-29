@@ -49,7 +49,7 @@ const cacheBust = (u) => {
 // Returns { ok: true, result, pro, rendered } or
 //         { ok: false, status, payload }  — map payload onto the HTTP/JSON-RPC
 // surface unchanged.
-export async function runScan(env, kv, { url, html, site, license, email_report, ip, origin }) {
+export async function runScan(env, kv, { url, html, site, license, email_report, viewport, ip, origin }) {
   const pro = await kv.isPro(env, license);
   const day = new Date().toISOString().slice(0, 10);
   const rlKey = `rl:scan:${ip}:${day}`;
@@ -73,9 +73,15 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
     return { ok: false, status: 429, payload: { error: 'daily scan quota exceeded — try again tomorrow' } };
   }
 
+  // Rendered scans run at a mobile handset profile by default — "desktop"
+  // opts back to the pre-mobile baseline render. Recorded per result so
+  // reports and monitors can compare like-for-like.
+  const vpMode = viewport === 'desktop' ? 'desktop' : 'mobile';
+
   let issues = [];
   let rendered = false;
   let renderError = null;
+  let renderedViewport = null;
   let sitePages = null;
 
   if (isHttpUrl(url) && site === true) {
@@ -99,9 +105,11 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
     }
   } else if (isHttpUrl(url)) {
     try {
-      const r = await kv.platform(env, '/render', { method: 'POST', body: JSON.stringify({ url: cacheBust(url) }) });
+      const r = await kv.platform(env, '/render', { method: 'POST', body: JSON.stringify({ url: cacheBust(url), viewport: vpMode }) });
       if (!r.ok) throw new Error(`render ${r.status}`);
       const page = await r.json();
+      // Older render builds carry no viewport echo — they rendered desktop.
+      renderedViewport = page.viewport === 'mobile' || page.viewport === 'desktop' ? page.viewport : 'desktop';
       issues = scanHtml(page.html)
         .concat(scanAdditionalHtml(page.html))
         .concat(scanWcag22(page.html))
@@ -126,7 +134,7 @@ export async function runScan(env, kv, { url, html, site, license, email_report,
   }
 
   issues = withRecommendations(issues);
-  const result = { score: sitePages ? Math.round(sitePages.reduce((t, p) => t + p.score, 0) / sitePages.length) : score(issues), score_model: 'weighted-v1', issues, rendered, plan: pro ? 'pro' : 'free', section508: section508Report(issues), ...(renderError ? { render_error: renderError } : {}), ...(sitePages ? { site: true, pages: sitePages.map(({ url, score: s, issues: i }) => ({ url, score: s, count: i.length })) } : {}) };
+  const result = { score: sitePages ? Math.round(sitePages.reduce((t, p) => t + p.score, 0) / sitePages.length) : score(issues), score_model: 'weighted-v1', issues, rendered, plan: pro ? 'pro' : 'free', section508: section508Report(issues), ...(renderedViewport ? { viewport: renderedViewport } : {}), ...(renderError ? { render_error: renderError } : {}), ...(sitePages ? { site: true, pages: sitePages.map(({ url, score: s, issues: i }) => ({ url, score: s, count: i.length })) } : {}) };
 
   // Score benchmark — every real-site scan feeds a scan_stats row on the
   // platform, and the result reports where this score lands against that

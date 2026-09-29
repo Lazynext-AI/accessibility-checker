@@ -341,7 +341,7 @@ export default {
       }
       if (pend.action === 'monitor_add') {
         try {
-          await kvPut(env, monitorKey(pend.email, pend.url), JSON.stringify(buildMonitorRecord({ email: pend.email, url: pend.url })), 0);
+          await kvPut(env, monitorKey(pend.email, pend.url), JSON.stringify(buildMonitorRecord({ email: pend.email, url: pend.url, viewport: pend.viewport })), 0);
         } catch {
           return confirmPage('Monitoring setup failed', '<p>Something went wrong on our side — please try the confirmation link again or request a new one.</p>');
         }
@@ -367,6 +367,7 @@ export default {
       const r = await runScan(env, KV_OPS, {
         url: body.url, html: body.html, site: body.site,
         license: body.license, email_report: body.email_report,
+        viewport: body.viewport,
         ip: request.headers.get('cf-connecting-ip') ?? 'anon',
         origin: url.origin,
       });
@@ -415,7 +416,9 @@ export default {
         return respond({ error: 'too many requests — try again tomorrow' }, 429);
       }
       try {
-        await requestConfirm(env, url.origin, b.license, 'monitor_add', { url: b.url });
+        // Pin the viewport the monitor's rescans will run at — the rescan
+        // sweep passes it through so baseline comparisons stay like-for-like.
+        await requestConfirm(env, url.origin, b.license, 'monitor_add', { url: b.url, viewport: b.viewport === 'desktop' ? 'desktop' : 'mobile' });
       } catch {
         return respond({ error: 'could not create confirmation — try again shortly' }, 502);
       }

@@ -81,7 +81,7 @@ export const OPENAPI = {
     '/scan': {
       post: {
         summary: 'Scan a page or site for WCAG issues',
-        description: 'Provide `url` (public http/https page — rendered via headless browser) or raw `html` (static rules only). `site: true` crawls same-origin pages — 3 pages free, 10 Pro. Free URL scans consume the 3/day/IP quota; `html` scans do not. A Pro `license` email unlocks higher limits, deeper crawls, and `email_report`.',
+        description: 'Provide `url` (public http/https page — rendered via headless browser at a mobile 390×844 viewport by default; `viewport: "desktop"` opts out) or raw `html` (static rules only). `site: true` crawls same-origin pages — 3 pages free, 10 Pro. Free URL scans consume the 3/day/IP quota; `html` scans do not. A Pro `license` email unlocks higher limits, deeper crawls, and `email_report`.',
         requestBody: {
           required: true,
           content: { 'application/json': { schema: { $ref: '#/components/schemas/ScanRequest' } } },
@@ -180,8 +180,8 @@ export const OPENAPI = {
       },
       post: {
         summary: 'Add a daily monitor (email-confirmed)',
-        description: 'Daily rendered rescan with score-drop email alerts. Max 50 monitors per license. Sends a confirmation link; the monitor activates on `GET /confirm`.',
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { license: { type: 'string', format: 'email' }, url: { type: 'string', format: 'uri' } }, required: ['license', 'url'] } } } },
+        description: 'Daily rendered rescan with score-drop email alerts. Max 50 monitors per license. Sends a confirmation link; the monitor activates on `GET /confirm`. The monitor pins the `viewport` it was created with (default mobile); monitors created before viewport support stay on desktop.',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { license: { type: 'string', format: 'email' }, url: { type: 'string', format: 'uri' }, viewport: { type: 'string', enum: ['mobile', 'desktop'], description: 'Render profile the monitor pins for rescans (default mobile)' } }, required: ['license', 'url'] } } } },
         responses: {
           '200': json({ $ref: '#/components/schemas/ConfirmRequired' }),
           '400': err('Provide `{"url"}`'),
@@ -324,6 +324,7 @@ export const OPENAPI = {
           url: { type: 'string', format: 'uri' },
           license: { type: 'string', format: 'email' },
           created: { type: 'number', description: 'epoch ms' },
+          viewport: { type: 'string', enum: ['mobile', 'desktop'], description: 'Pinned render profile — rescans always use it so score comparisons are like-for-like' },
           last_score: { type: 'number' },
           last_scan: { type: 'number', description: 'epoch ms' },
           alerted: { type: 'boolean' },
@@ -337,6 +338,7 @@ export const OPENAPI = {
           site: { type: 'boolean', description: 'Crawl same-origin pages (3 free / 10 Pro) and add cross-page checks.' },
           license: { type: 'string', format: 'email', description: 'Pro purchase email — higher limits, deeper crawls, monitoring.' },
           email_report: { type: 'boolean', description: 'Pro only: email the report to the license address.' },
+          viewport: { type: 'string', enum: ['mobile', 'desktop'], description: 'Rendered-scan viewport profile — mobile emulates a 390×844 handset (touch + mobile UA, the default); desktop keeps the pre-mobile baseline render. Ignored for `html` scans and site crawls.' },
         },
       },
       ScanResult: {
@@ -346,6 +348,7 @@ export const OPENAPI = {
           score_model: { type: 'string', enum: ['weighted-v1'], description: 'Scoring model version — weighted-v1 sums findings weighted by WCAG level and detection confidence (warn-class heuristics count half), repeat instances of the same rule at half marginal weight. Level-A confirmed failures still weigh 1.0.' },
           issues: { type: 'array', items: { $ref: '#/components/schemas/Issue' } },
           rendered: { type: 'boolean', description: 'true when the headless-browser path ran (false = static fallback)' },
+          viewport: { type: 'string', enum: ['mobile', 'desktop'], description: 'Viewport the render ran at — present only when rendered: true' },
           plan: { type: 'string', enum: ['free', 'pro'] },
           report: { type: 'string', format: 'uri', description: 'Shareable report URL (30-day TTL)' },
           render_error: { type: 'string', description: 'Present when rendering failed and the static fallback ran' },

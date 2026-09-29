@@ -17,10 +17,12 @@ export function monitorKey(email, url) {
 }
 
 /** Fresh monitor record for an owner+URL pair. */
-export function buildMonitorRecord({ email, url }) {
+export function buildMonitorRecord({ email, url, viewport }) {
   return {
     url: String(url ?? "").trim(),
     email: String(email ?? "").trim().toLowerCase(),
+    // Pinned render profile — rescans compare like-for-like against it.
+    viewport: viewport === "desktop" ? "desktop" : "mobile",
     created_at: Date.now(),
     last_score: null,
     last_scan_at: null,

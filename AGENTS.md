@@ -55,6 +55,15 @@ check and silently gets the 60s floor.
   be named (`img-src 'self'` was added `b69383f` after the same-origin
   badge SVG rendered broken). Report pages are edge-cached 1h — verify
   CSP/HTML changes with a `?cb=N` query param, not a plain reload.
+- **Rendered scans run at a mobile viewport by default** (founder decision
+  2026-09-29): `?viewport=mobile|desktop` on `/scan`, MCP `scan_url`, and the
+  UI select. `/render` emulates a 390×844 touch handset (iPhone UA); `desktop`
+  preserves the pre-mobile baseline (default puppeteer viewport + desktop UA).
+  `result.viewport` records the profile the render actually ran — an older
+  render build without the echo is reported `desktop` honestly. **Monitor
+  baseline trap:** rescans pin `mon:*.viewport` (`worker/src/index.ts` sweep
+  defaults missing → `desktop`), so pre-mobile monitors keep comparing
+  like-for-like and no false drop-alerts fire on the model change.
 
 ## Coverage honesty
 

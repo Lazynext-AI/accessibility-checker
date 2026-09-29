@@ -52,6 +52,7 @@
         <a id="cancel" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">cancel</a>
         <label style="align-self:center;font-size:.8rem;color:#4b5563;display:flex;gap:.3rem;align-items:center;white-space:nowrap"><input id="emailReport" type="checkbox" style="flex:none">email me the report (Pro)</label>
         <label style="align-self:center;font-size:.8rem;color:#4b5563;display:flex;gap:.3rem;align-items:center;white-space:nowrap"><input id="siteScan" type="checkbox" style="flex:none">whole site</label>
+        <label style="align-self:center;font-size:.8rem;color:#4b5563;display:flex;gap:.3rem;align-items:center;white-space:nowrap">viewport <select id="viewport" style="flex:none;border:1px solid #d1d5db;border-radius:6px;font-size:.8rem;color:#4b5563;padding:.15rem .3rem"><option value="mobile" selected>mobile</option><option value="desktop">desktop</option></select></label>
         <a id="monitor" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">monitor daily</a>
         <a id="myMonitors" href="#" style="align-self:center;font-size:.8rem;color:#4b5563">my monitors</a>
     </p>
@@ -132,7 +133,7 @@
                 const license = document.getElementById("license").value.trim();
                 const site = document.getElementById("siteScan").checked;
                 statusEl.textContent = site ? "Crawling and scanning pages…" : "Rendering page and scanning…";
-                const r = await fetch(API + "/scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, ...(license ? { license } : {}), email_report: document.getElementById("emailReport").checked, ...(site ? { site: true } : {}) }) });
+                const r = await fetch(API + "/scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, ...(license ? { license } : {}), email_report: document.getElementById("emailReport").checked, viewport: document.getElementById("viewport").value, ...(site ? { site: true } : {}) }) });
                 const d = await r.json();
                 if (r.status === 402) {
                     statusEl.innerHTML = `Free limit reached — <a href="${API}/checkout">start a free 14-day Pro trial</a> for unlimited scans, or drop your email and we'll send you a discount:`;
@@ -146,7 +147,7 @@
                 }
                 if (!r.ok) throw new Error(d.error || r.statusText);
                 if (d.report) addHist(url, d.report, d.score);
-                statusEl.innerHTML = `Score: <span id="score">${d.score}</span>/100` + (d.site ? ` · ${d.pages.length} pages` : d.rendered ? " · rendered" : " · static") + (d.benchmark ? ` · better than ${d.benchmark.pct}% of ${d.benchmark.sites} sites` : "") + (d.report ? ` · <a href="${d.report}" target="_blank">share report</a>` : "");
+                statusEl.innerHTML = `Score: <span id="score">${d.score}</span>/100` + (d.site ? ` · ${d.pages.length} pages` : d.rendered ? ` · rendered ${d.viewport ?? ""}` : " · static") + (d.benchmark ? ` · better than ${d.benchmark.pct}% of ${d.benchmark.sites} sites` : "") + (d.report ? ` · <a href="${d.report}" target="_blank">share report</a>` : "");
                 out.innerHTML = (d.site ? d.pages.map(p => `<div class="issue" style="border-left-color:#4f46e5"><div class="rule">${p.url}</div>score ${p.score}/100 · ${p.count} issue${p.count === 1 ? "" : "s"}</div>`).join("") : "")
                     + (d.issues.length
                         ? d.issues.map(i => `<div class="issue"><div class="rule">${i.rule ?? "issue"}${i.url ? " · " + i.url : ""}</div>${i.message}</div>`).join("")
@@ -176,7 +177,7 @@
             if (!email.includes("@")) { statusEl.textContent = "Monitoring is a Pro feature — enter your purchase email in the license field first."; return; }
             if (!/^https?:\/\//i.test(url)) { statusEl.textContent = "Enter the URL to monitor in the scan field."; return; }
             const r = await fetch(`${API}/monitor`, {
-                method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ license: email, url })
+                method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ license: email, url, viewport: document.getElementById("viewport").value })
             });
             const d = await r.json().catch(() => ({}));
             statusEl.textContent = r.ok

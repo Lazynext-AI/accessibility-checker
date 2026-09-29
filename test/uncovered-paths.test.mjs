@@ -124,6 +124,52 @@ test('POST /scan rendered path merges every ruleset and marks rendered', async (
   assert.ok(rules.has('wcag-1.4.3')); // rendered contrast
 });
 
+test('POST /scan defaults the render viewport to mobile', async () => {
+  let renderBody;
+  const env = mockEnv({}, {
+    '/render': async (req) => {
+      renderBody = await req.json();
+      return Response.json({ html: '<html><body><h1>x</h1></body></html>', styles: [], facts: {}, focus: [], focusable: 1, viewport: 'mobile' });
+    },
+  });
+  const r = await post('/scan', { url: 'https://x.test/' }, {}, env);
+  assert.equal(r.status, 200);
+  const d = await r.json();
+  assert.equal(renderBody.viewport, 'mobile');
+  assert.equal(d.rendered, true);
+  assert.equal(d.viewport, 'mobile');
+});
+
+test('POST /scan honors viewport=desktop and echoes it in the result', async () => {
+  let renderBody;
+  const env = mockEnv({}, {
+    '/render': async (req) => {
+      renderBody = await req.json();
+      return Response.json({ html: '<html><body><h1>x</h1></body></html>', styles: [], facts: {}, focus: [], focusable: 1, viewport: 'desktop' });
+    },
+  });
+  const r = await post('/scan', { url: 'https://x.test/', viewport: 'desktop' }, {}, env);
+  const d = await r.json();
+  assert.equal(renderBody.viewport, 'desktop');
+  assert.equal(d.viewport, 'desktop');
+});
+
+test('POST /scan records desktop when the render response carries no viewport echo', async () => {
+  const env = mockEnv({}, {
+    '/render': () => Response.json({ html: '<html><body><h1>x</h1></body></html>', styles: [], facts: {}, focus: [], focusable: 1 }),
+  });
+  const r = await post('/scan', { url: 'https://x.test/' }, {}, env);
+  const d = await r.json();
+  assert.equal(d.rendered, true);
+  assert.equal(d.viewport, 'desktop'); // pre-viewport renders were desktop
+});
+
+test('buildMonitorRecord pins the subscribe-time viewport', () => {
+  assert.equal(buildMonitorRecord({ email: 'a@b.c', url: 'https://x.test', viewport: 'desktop' }).viewport, 'desktop');
+  assert.equal(buildMonitorRecord({ email: 'a@b.c', url: 'https://x.test' }).viewport, 'mobile');
+  assert.equal(buildMonitorRecord({ email: 'a@b.c', url: 'https://x.test', viewport: 'bogus' }).viewport, 'mobile');
+});
+
 test('POST /scan falls back to a plain fetch when /render fails', async (t) => {
   stubFetch(t, async () => new Response('<html><body><img src="x.png"></body></html>', { status: 200 }));
   const env = mockEnv({}, { '/render': () => new Response('boom', { status: 500 }) });
@@ -131,6 +177,7 @@ test('POST /scan falls back to a plain fetch when /render fails', async (t) => {
   assert.equal(r.status, 200);
   const d = await r.json();
   assert.equal(d.rendered, false);
+  assert.equal(d.viewport, undefined); // static fallback ran no render
   assert.match(d.render_error, /render 500/);
   assert.ok(d.issues.some((i) => i.rule === 'wcag-1.1.1')); // img without alt
 });

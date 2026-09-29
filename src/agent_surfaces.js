@@ -37,6 +37,7 @@ const MCP_TOOLS = [
       properties: {
         url: { type: 'string', description: 'http(s) URL to scan' },
         site: { type: 'boolean', description: 'crawl same-origin pages (3 free / 10 Pro)' },
+        viewport: { type: 'string', enum: ['mobile', 'desktop'], description: 'render profile — mobile 390×844 handset (default); desktop preserves the pre-mobile baseline render' },
         license: { type: 'string', description: 'Pro license email (optional)' },
       },
       required: ['url'],
@@ -82,7 +83,7 @@ async function callTool(env, kv, ip, origin, name, args = {}) {
     return JSON.parse(raw);
   }
   if (name === 'scan_url') {
-    const r = await runScan(env, kv, { url: args.url, site: args.site === true, license: args.license, ip, origin });
+    const r = await runScan(env, kv, { url: args.url, site: args.site === true, viewport: args.viewport, license: args.license, ip, origin });
     return r.ok ? r.result : { error: r.payload.error, status: r.status, ...r.payload };
   }
   if (name === 'scan_html') {
